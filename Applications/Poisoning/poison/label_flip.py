@@ -4,8 +4,8 @@ import argparse
 import numpy as np
 from tensorflow.keras.losses import categorical_crossentropy
 
-from Applications.Poisoning.dataset import Cifar10
-from Applications.Poisoning.model import get_VGG_CIFAR10
+from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, GTSRB, Cifar100
+from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100
 from Applications.Poisoning.train import train
 from util import UnlearningResult, MixedResult, GradientLoggingContext, LabelFlipResult, save_train_results
 
@@ -94,7 +94,7 @@ def get_parser():
 
 
 def main(model_folder, budget, batch_size=64, lr_init=1e-4,
-         epochs=100, base_seed=42, n_repititions=1):
+         epochs=100, base_seed=42, n_repititions=1, dataset="cifar10", modeltype="VGG16"):
     train_kwargs = dict(batch_size=batch_size, lr_init=lr_init, epochs=epochs)
 
     # train and evaluate clean model as reference
@@ -105,27 +105,45 @@ def main(model_folder, budget, batch_size=64, lr_init=1e-4,
     for i in range(n_repititions):
         seed = base_seed + i
         model_folder = os.path.join(model_folder, f'budget-{budget}', f'seed{seed}')
-        data = Cifar10().load()
-        eval_flipped_model(data, get_VGG_CIFAR10, model_folder, budget, seed, **train_kwargs)
+        if dataset == "Cifar10":
+            data = Cifar10.load()
+            eval_flipped_model(dataset, modeltype, data, get_VGG16_CIFAR10, model_folder, budget, seed, **train_kwargs)
+        if dataset == "Mnist":
+            data = Mnist.load()
+            eval_flipped_model(dataset,modeltype,  data, get_VGG16_MNIST, model_folder, budget, seed, **train_kwargs)
+        if dataset == "FashionMnist":
+            data = FashionMnist.load()
+            eval_flipped_model(dataset, modeltype, data, get_VGG16_FASHION, model_folder, budget, seed, **train_kwargs)
+        if dataset == "SVHN":
+            data = SVHN.load()
+            eval_flipped_model(dataset, modeltype, data, get_VGG16_SVHN, model_folder, budget, seed, **train_kwargs)
+        if dataset == "GTSRB":
+            data = GTSRB.load()
+            eval_flipped_model(dataset, modeltype, data, get_VGG16_GTSRB, model_folder, budget, seed, **train_kwargs)
+        if dataset == "Cifar100":
+            data = Cifar100.load()
+            eval_flipped_model(dataset, modeltype, data, get_VGG16_CIFAR100, model_folder, budget, seed, **train_kwargs)
 
 
-def eval_flipped_model(data, model_init, model_folder, budget, seed=42, **train_kwargs):
+
+def eval_flipped_model(dataset, modeltype, data, model_init, model_folder, budget, seed=42, **train_kwargs):
     os.makedirs(model_folder, exist_ok=True)
     result = LabelFlipResult(model_folder)
+
     if result.exists:
         return
     (x_train, y_train), (x_test, y_test), (x_valid, y_valid) = data
     y_train_orig = y_train.copy()
     y_train, _ = flip_labels(y_train, create_rand_offset(y_train, seed), budget, seed)
 
-    weight_path = os.path.join(model_folder, 'best_model.hdf5')
+    weight_path = os.path.join(model_folder, dataset +"_"+modeltype+"_"+'_best_model.hdf5')
     if not os.path.exists(weight_path):
         train(model_init, model_folder, data, **train_kwargs)
         save_train_results(model_folder)
     flipped_model = model_init(weight_path=weight_path)
 
     retrain_folder = os.path.join(model_folder, 'retraining')
-    retrain_weights = os.path.join(retrain_folder, 'best_model.hdf5')
+    retrain_weights = os.path.join(retrain_folder,  dataset+"_"+modeltype+'best_model.hdf5')
     os.makedirs(retrain_folder, exist_ok=True)
     y_train = y_train_orig
     train(model_init, retrain_folder, data, **train_kwargs)
