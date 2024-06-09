@@ -32,11 +32,11 @@ def freeze_layers(model, num_layers_to_freeze):
         for layer in model.layers[-num_layers_to_freeze:]:
             layer.trainable = True
 
-def train(model_init, model_folder, data, epochs, batch_size, model_filename='best_model.hdf5', classes=10, **kwargs):
+def train(model_init, model_folder, data, epochs, batch_size, model_filename='best_model.hdf5', classes=10, unfreeze_layers_steps=None, **kwargs):
     os.makedirs(model_folder, exist_ok=True)
     model_save_path = os.path.join(model_folder, model_filename)
-    # if os.path.exists(model_save_path):
-    #     return model_save_path
+    if os.path.exists(model_save_path):
+        return model_save_path
     
 
     csv_save_path = os.path.join(model_folder, 'train_log.csv')
@@ -64,15 +64,15 @@ def train(model_init, model_folder, data, epochs, batch_size, model_filename='be
     )
     datagen.fit(x_train)
     train_generator = datagen.flow(x_train, y_train, batch_size=batch_size)
-    if os.path.exists(model_save_path):
-        #finetuninig
-        if unfreeze_layers_steps is None:
-            unfreeze_layers_steps = [len(model.layers)]
+    # if os.path.exists(model_save_path):
+    #     #finetuninig
+    #     if unfreeze_layers_steps is None:
+    #         unfreeze_layers_steps = [len(model.layers)]
             
-        for num_layers_to_freeze in unfreeze_layers_steps:
-            freeze_layers(model, num_layers_to_freeze)
-            opt = SGD(learning_rate=0.0001, decay=1e-6, momentum=0.9, nesterov=True)
-            model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy', 'Precision', 'Recall'])
+    #     for num_layers_to_freeze in unfreeze_layers_steps:
+    #         freeze_layers(model, num_layers_to_freeze)
+    #         opt = SGD(learning_rate=0.0001, decay=1e-6, momentum=0.9, nesterov=True)
+    #         model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy', 'Precision', 'Recall'])
                           
 
     with measure_time() as t:

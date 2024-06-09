@@ -16,8 +16,6 @@ from keras.models import Model
 CIFAR_SHAPE = (32, 32, 3)
 
 
-
-
 def conv_block(input_tensor, filters, kernel_size, strides=(2, 2), use_bias=True, name=None):
     x = layers.Conv2D(filters, kernel_size=kernel_size, strides=strides, padding='same', use_bias=use_bias, name=name + '_conv')(input_tensor)
     x = layers.BatchNormalization(name=name + '_bn')(x)
@@ -109,6 +107,7 @@ def VGG16Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=Fals
 
     input_layer = Input(shape=input_shape)
     
+    
     # Block 1
     model = Conv2D(filters=64, kernel_size=3, padding='same')(input_layer)
     model = BatchNormalization()(model)
@@ -169,22 +168,22 @@ def VGG16Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=Fals
     return model
 
 def get_VGG16_CIFAR100( input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
-    return VGG16Base(input_shape, num_classes, dense_units, lr_init, sgd)
+    return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
 
 
 def get_VGG16_CIFAR10(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    return VGG16Base(input_shape, num_classes, dense_units, lr_init, sgd)
+    return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
 
 def get_VGG16_MNIST(input_shape=(28, 28, 1), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    return VGG16Base(input_shape, num_classes, dense_units, lr_init, sgd)
+    print("VGG16 MNIST model")
+    return VGG16Base((28, 28, 1), num_classes, dense_units, lr_init, sgd)
 
 def get_VGG16_FASHION(input_shape=(28, 28, 1), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    return VGG16Base(input_shape, num_classes, dense_units, lr_init, sgd)
+    return VGG16Base((28, 28, 1), num_classes, dense_units, lr_init, sgd)
 
 def get_VGG16_SVHN(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    return VGG16Base(input_shape, num_classes, dense_units, lr_init, sgd)
+    return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
 
 def get_VGG16_GTSRB(input_shape=(32, 32, 3), num_classes=43, dense_units=512, lr_init=0.001, sgd=False):
-    return VGG16Base(input_shape, num_classes, dense_units, lr_init, sgd)
-
+    return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
 

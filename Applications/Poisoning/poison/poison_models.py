@@ -5,6 +5,7 @@ import argparse
 from Applications.Poisoning.configs.config import Config
 from Applications.Poisoning.train import train
 from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100
+from Applications.Poisoning.model import get_RESNET50_CIFAR10, get_RESNET50_MNIST, get_RESNET50_FASHION, get_RESNET50_SVHN, get_RESNET50_GTSRB, get_RESNET50_CIFAR100
 from Applications.Poisoning.poison.injector import LabelflipInjector
 from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, GTSRB, Cifar100
 from Applications.Sharding.ensemble import train_models
@@ -18,47 +19,57 @@ def get_parser():
 
 
 def train_poisoned(model_folder, poison_kwargs, train_kwargs, dataset='cifar10', modeltype='VGG16', classes=10):
-    
+    data = None
+    model_init = None
+
+
+
     if dataset == 'Cifar10':
         data = Cifar10.load()
         if modeltype == 'VGG16':
-            model_init = lambda: get_VGG_CIFAR10(classes)
+            model_init = lambda: get_VGG16_CIFAR10(classes)
         else:
             model_init = lambda: get_RESNET50_CIFAR10(classes)
-    if dataset == 'Mnist':
+    elif dataset == 'Mnist':
         data = Mnist.load()
         if modeltype == 'VGG16':
             model_init = lambda: get_VGG16_MNIST(classes)
+            print(f"Classes: {classes}, Modeltype: {modeltype}")
         else:
             model_init = lambda: get_RESNET50_MNIST(classes)
 
-    if dataset == 'FashionMnist':
+    elif dataset == 'FashionMnist':
         data = FashionMnist.load()
         if modeltype == 'VGG16':
             model_init = lambda: get_VGG16_FASHION(classes)
         else:
             model_init = lambda: get_RESNET50_FASHION(classes)
     
-    if dataset == 'SVHN':
+    elif dataset == 'SVHN':
         data = SVHN.load()
         if modeltype == 'VGG16':
             model_init = lambda: get_VGG16_SVHN(classes)
         else:
             model_init = lambda: get_RESNET50_SVHN(classes)
 
-    if dataset == 'GTSRB':
+    elif dataset == 'GTSRB':
         data = GTSRB.load()
         if modeltype == 'VGG16':
             model_init = lambda: get_VGG16_GTSRB(classes)
         else:
             model_init = lambda: get_RESNET50_GTSRB(classes)
 
-    if dataset == 'Cifar100':
+    elif dataset == 'Cifar100':
         data = Cifar100.load()
         if modeltype == 'VGG16':
             model_init = lambda: get_VGG16_CIFAR100(classes)
         else:
             model_init = lambda: get_RESNET50_CIFAR100(classes)
+    else:
+        raise ValueError(f"Unknown dataset: {dataset}")
+        
+    if data is None or model_init is None:
+        raise ValueError(f"Data or model initialization function not properly set for dataset: {dataset} and modeltype: {modeltype}")
 
     (x_train, y_train), _, _ = data
 
@@ -76,7 +87,6 @@ def train_poisoned(model_folder, poison_kwargs, train_kwargs, dataset='cifar10',
     injector.save(injector_path)
     data = ((x_train, y_train), data[1], data[2])
 
-    model_init = lambda: get_VGG_CIFAR10(dense_units=train_kwargs['model_size'])
     if 'sharding' in str(model_folder):
         n_shards = Config.from_json(os.path.join(model_folder, 'unlearn_config.json'))['n_shards']
         train_models(model_init, model_folder, data, n_shards, model_filename=dataset+"_"+modeltype+'_poisoned_model.hdf5', **train_kwargs)
