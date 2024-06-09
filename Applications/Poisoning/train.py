@@ -6,7 +6,8 @@ from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger
 from sklearn.metrics import classification_report
 
 from util import TrainingResult, measure_time
-from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_GTSRB, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_CIFAR100, get_RESNET50_CIFAR10, get_RESNET50_GTSRB, get_RESNET50_MNIST, get_RESNET50_FASHION, get_RESNET50_SVHN, get_RESNET50_CIFAR100
+from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_GTSRB, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_CIFAR100
+from Applications.Poisoning.model import get_RESNET50_CIFAR10, get_RESNET50_GTSRB, get_RESNET50_MNIST, get_RESNET50_FASHION, get_RESNET50_SVHN, get_RESNET50_CIFAR100
 from Applications.Poisoning.configs.config import Config
 from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, GTSRB, Cifar100
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, EarlyStopping, LearningRateScheduler
@@ -101,12 +102,12 @@ def train(model_init, model_folder, data, epochs, batch_size, model_filename='be
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('model_folder', type=str)
-    parser.add_argument('--dataset', type=str, default='Cifar10', choices=['Cifar10', 'Cifar100', 'Mnist'])
+    parser.add_argument('--dataset', type=str, default='Cifar10', choices=['Cifar10', 'Cifar100', 'Mnist', 'FashionMnist', 'SVHN', 'GTSRB'])
     parser.add_argument('--modeltype', type=str, default='RESNET50', choices=['RESNET50', 'VGG16'])
     parser.add_argument('--classes', type=int, default=10)
     return parser
 
-def main(model_folder, dataset, modeltype="RESNET50", classes=10):
+def main(model_folder, dataset="Cifar10", modeltype="RESNET50", classes=10):
     train_conf = os.path.join(model_folder, 'train_config.json')
     train_kwargs = Config.from_json(train_conf)
 
@@ -156,7 +157,7 @@ def main(model_folder, dataset, modeltype="RESNET50", classes=10):
         else:
             model_init = lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
             
-    train(model_init, model_folder, data, classes=classes, **train_kwargs, model_filename=dataset  +"_"+modeltype+ '_best_model.hdf5', classes=classes)
+    train(model_init, model_folder, data, **train_kwargs, model_filename=dataset  +"_"+modeltype+ '_best_model.hdf5', classes=classes)
 
 
 if __name__ == '__main__':

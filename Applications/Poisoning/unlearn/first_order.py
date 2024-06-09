@@ -4,9 +4,10 @@ import json
 import argparse
 
 from Applications.Poisoning.configs.config import Config
-from Applications.Poisoning.model import get_VGG_CIFAR10
+from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100
+from Applications.Poisoning.model import get_RESNET50_CIFAR10, get_RESNET50_MNIST, get_RESNET50_FASHION, get_RESNET50_SVHN, get_RESNET50_GTSRB, get_RESNET50_CIFAR100
 from Applications.Poisoning.poison.injector import LabelflipInjector
-from Applications.Poisoning.dataset import Cifar10
+from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, GTSRB, Cifar100
 from Applications.Poisoning.unlearn.common import evaluate_unlearning
 from util import UnlearningResult, reduce_dataset
 
