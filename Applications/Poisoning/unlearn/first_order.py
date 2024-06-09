@@ -20,8 +20,49 @@ def get_parser():
     return parser
 
 
-def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, reduction=1.0, verbose=False):
-    data = Cifar10.load()
+def run_experiment(dataset, modeltype, model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, reduction=1.0, verbose=False):
+    if dataset == "Cifar10":
+        data = Cifar10.load()
+        if modeltype == "RESNET50":
+            model_init = lambda: get_RESNET50_CIFAR10(dense_units=train_kwargs['model_size'])
+        else:
+            model_init = lambda: get_VGG16_CIFAR10(dense_units=train_kwargs['model_size'])
+
+    if dataset == "Mnist":
+        data = Mnist.load()
+        if modeltype == "RESNET50":
+            model_init = lambda: get_RESNET50_MNIST(dense_units=train_kwargs['model_size'])
+        else:
+            model_init = lambda: get_VGG16_MNIST(dense_units=train_kwargs['model_size'])
+
+    if dataset == "FashionMnist":
+        data = FashionMnist.load()
+        if modeltype == "RESNET50":
+            model_init = lambda: get_RESNET50_FASHION(dense_units=train_kwargs['model_size'])
+        else:
+            model_init = lambda: get_VGG16_FASHION(dense_units=train_kwargs['model_size'])
+
+    if dataset == "SVHN":
+        data = SVHN.load()
+        if modeltype == "RESNET50":
+            model_init = lambda: get_RESNET50_SVHN(dense_units=train_kwargs['model_size'])
+        else:
+            model_init = lambda: get_VGG16_SVHN(dense_units=train_kwargs['model_size'])
+    
+    if dataset == "GTSRB":
+        data = GTSRB.load()
+        if modeltype == "RESNET50":
+            model_init = lambda: get_RESNET50_GTSRB(dense_units=train_kwargs['model_size'])
+        else:
+            model_init = lambda: get_VGG16_GTSRB(dense_units=train_kwargs['model_size'])
+    if dataset == "Cifar100":
+        data = Cifar100.load()
+        if modeltype == "RESNET50":
+            model_init = lambda: get_RESNET50_CIFAR100(dense_units=train_kwargs['model_size'])
+        else:
+            model_init = lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
+
+        
     (x_train, y_train), _, _ = data
     y_train_orig = y_train.copy()
 
@@ -43,9 +84,8 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
     y_train_orig = y_train_orig[idx_reduced]
     data = ((x_train, y_train), data[1], data[2])
 
-    model_init = lambda: get_VGG_CIFAR10(dense_units=train_kwargs['model_size'])
-    poisoned_filename = 'poisoned_model.hdf5'
-    repaired_filename = 'repaired_model.hdf5'
+    poisoned_filename = dataset+"_"+modeltype+'_poisoned_model.hdf5'
+    repaired_filename = dataset+"_"+modeltype+'_repaired_model.hdf5'
     first_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data,
                            y_train_orig, injector.injected_idx, unlearn_kwargs, verbose=verbose)
 
@@ -80,12 +120,12 @@ def first_order_unlearning(model_folder, poisoned_filename, repaired_filename, m
     unlearning_result.save()
 
 
-def main(model_folder, config_file, verbose):
+def main(model_folder, config_file, verbose, dataset='Cifar10', modeltype="VGG16"):
     config_file = os.path.join(model_folder, config_file)
     train_kwargs = Config.from_json(os.path.join(parent(model_folder), 'train_config.json'))
     unlearn_kwargs = Config.from_json(config_file)
     poison_kwargs = Config.from_json(os.path.join(parent(model_folder), 'poison_config.json'))
-    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose)
+    run_experiment(dataset, modeltype, model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose)
 
 
 if __name__ == '__main__':

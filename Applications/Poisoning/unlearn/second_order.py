@@ -4,9 +4,9 @@ import json
 import argparse
 
 from Applications.Poisoning.configs.config import Config
-from Applications.Poisoning.model import get_VGG_CIFAR10
+from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100
 from Applications.Poisoning.poison.injector import LabelflipInjector
-from Applications.Poisoning.dataset import Cifar10
+from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, GTSRB, Cifar100
 from Applications.Poisoning.unlearn.common import evaluate_unlearning
 from util import UnlearningResult, reduce_dataset
 
@@ -20,8 +20,58 @@ def get_parser():
     return parser
 
 
-def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, reduction=1.0, verbose=False):
-    data = Cifar10.load()
+def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, reduction=1.0, verbose=False, dataset='Cifar10', modeltype="VGG16", classes=10):
+    if dataset == "Cifar10":
+        data = Cifar10.load()
+        if modeltype == "RESNET50":
+            classes = 10
+            model_init = lambda: get_RESNET50_CIFAR10(dense_units=train_kwargs['model_size'])
+        else:
+            model_init = lambda: get_VGG16_CIFAR10(dense_units=train_kwargs['model_size'])
+    if dataset == "Mnist":
+        data = Mnist.load()
+        classes = 10
+        if modeltype == "RESNET50":
+            model_init = lambda: get_RESNET50_MNIST(dense_units=train_kwargs['model_size'])
+        else:
+            model_init = lambda: get_VGG16_MNIST(dense_units=train_kwargs['model_size'])
+
+    if dataset == "FashionMnist":
+
+        classes = 10
+        data = FashionMnist.load()
+        if modeltype == "RESNET50":
+            model_init = lambda: get_RESNET50_FASHION(dense_units=train_kwargs['model_size'])
+        else:
+            model_init = lambda: get_VGG16_FASHION(dense_units=train_kwargs['model_size'])
+
+    if dataset == "SVHN":
+        classes = 10
+        data = SVHN.load()
+        if modeltype == "RESNET50":
+            model_init = lambda: get_RESNET50_SVHN(dense_units=train_kwargs['model_size'])
+        else:
+            model_init = lambda: get_VGG16_SVHN(dense_units=train_kwargs['model_size'])
+
+
+    if dataset == "GTSRB":
+        classes = 10
+        data = GTSRB.load()
+        if modeltype == "RESNET50":
+            model_init = lambda: get_RESNET50_GTSRB(dense_units=train_kwargs['model_size'])
+        else:
+            model_init = lambda: get_VGG16_GTSRB(dense_units=train_kwargs['model_size'])
+
+    if dataset == "Cifar100":
+        classes = 100
+        data = Cifar100.load()
+        if modeltype == "RESNET50":
+            model_init = lambda: get_RESNET50_CIFAR100(dense_units=train_kwargs['model_size'])
+        else:
+            model_init = lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
+
+
+
     (x_train, y_train), _, _ = data
     y_train_orig = y_train.copy()
 
@@ -44,8 +94,8 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
     data = ((x_train, y_train), data[1], data[2])
 
     model_init = lambda: get_VGG_CIFAR10(dense_units=train_kwargs['model_size'])
-    poisoned_filename = 'poisoned_model.hdf5'
-    repaired_filename = 'repaired_model.hdf5'
+    poisoned_filename = dataset+"_"+modeltype+'_poisoned_model.hdf5'
+    repaired_filename = dataset+"_"+modeltype+'_repaired_model.hdf5'
     second_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig,
                             injector.injected_idx, unlearn_kwargs, verbose=verbose)
 
@@ -80,12 +130,12 @@ def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, 
     unlearning_result.save()
 
 
-def main(model_folder, config_file, verbose):
+def main(model_folder, config_file, verbose, dataset='Cifar10', modeltype="VGG16"):
     config_file = os.path.join(model_folder, config_file)
     train_kwargs = Config.from_json(os.path.join(parent(model_folder), 'train_config.json'))
     unlearn_kwargs = Config.from_json(config_file)
     poison_kwargs = Config.from_json(os.path.join(parent(model_folder), 'poison_config.json'))
-    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose)
+    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, dataset=dataset, modeltype=modeltype)
 
 
 if __name__ == '__main__':
