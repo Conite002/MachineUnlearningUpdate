@@ -4,7 +4,7 @@ import json
 import argparse
 
 from Applications.Poisoning.configs.config import Config
-from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100
+from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100, get_RESNET50_CIFAR100, get_RESNET50_CIFAR10, get_RESNET50_MNIST, get_RESNET50_FASHION, get_RESNET50_SVHN, get_RESNET50_GTSRB
 from Applications.Poisoning.poison.injector import LabelflipInjector
 from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, GTSRB, Cifar100
 from Applications.Poisoning.unlearn.common import evaluate_unlearning
@@ -20,7 +20,7 @@ def get_parser():
     return parser
 
 
-def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, reduction=1.0, verbose=False, dataset='Cifar10', modeltype="VGG16", classes=10):
+def run_experiment(dataset, modeltype, model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, reduction=1.0, verbose=False, classes=10):
     if dataset == "Cifar10":
         data = Cifar10.load()
         if modeltype == "RESNET50":
@@ -93,16 +93,15 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
     y_train_orig = y_train_orig[idx_reduced]
     data = ((x_train, y_train), data[1], data[2])
 
-    model_init = lambda: get_VGG_CIFAR10(dense_units=train_kwargs['model_size'])
     poisoned_filename = dataset+"_"+modeltype+'_poisoned_model.hdf5'
     repaired_filename = dataset+"_"+modeltype+'_repaired_model.hdf5'
-    second_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig,
+    second_order_unlearning(dataset, modeltype, model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig,
                             injector.injected_idx, unlearn_kwargs, verbose=verbose)
 
 
-def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, delta_idx,
+def second_order_unlearning(dataset, modeltype, model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, delta_idx,
                             unlearn_kwargs, order=2, verbose=False):
-    unlearning_result = UnlearningResult(model_folder)
+    unlearning_result = UnlearningResult(model_folder, dataset, modeltype)
     poisoned_weights = os.path.join(parent(model_folder), poisoned_filename)
     log_dir = model_folder
 
@@ -135,7 +134,7 @@ def main(model_folder, config_file, verbose, dataset='Cifar10', modeltype="VGG16
     train_kwargs = Config.from_json(os.path.join(parent(model_folder), 'train_config.json'))
     unlearn_kwargs = Config.from_json(config_file)
     poison_kwargs = Config.from_json(os.path.join(parent(model_folder), 'poison_config.json'))
-    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, dataset=dataset, modeltype=modeltype)
+    run_experiment(dataset, modeltype, model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, dataset=dataset, modeltype=modeltype)
 
 
 if __name__ == '__main__':

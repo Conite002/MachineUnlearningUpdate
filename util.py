@@ -17,7 +17,9 @@ from tensorflow import GradientTape
 class Result(object):
     """ Python dict with save/load functionality. """
 
-    def __init__(self, base_path, name_tmpl, **suffix_kwargs):
+    def __init__(self, base_path, name_tmpl, dataset, modeltype, **suffix_kwargs):
+        self.dataset = dataset
+        self.modeltype = modeltype
         filename = name_tmpl
         if len(suffix_kwargs) > 0:
             # assemble name to `base_name{-k0_v0-k1_v1}.json`
@@ -43,7 +45,10 @@ class Result(object):
 
     def as_dict(self):
         exclude_keys = ['filepath', 'exists']
-        return {k: v for k, v in self.__dict__.items() if k not in exclude_keys}
+        result_dict = {k: v for k, v in self.__dict__.items() if k not in exclude_keys}
+        result_dict['dataset'] = self.dataset
+        result_dict['model_type'] = self.model_type
+        return result_dict
 
     def update(self, update_dict):
         self.__dict__.update(update_dict)
@@ -55,38 +60,38 @@ class Result(object):
 
 
 class TrainingResult(Result):
-    def __init__(self, model_folder, name_tmpl='train_results{}.json', **suffix_kwargs):
-        super().__init__(model_folder, name_tmpl, **suffix_kwargs)
+    def __init__(self, model_folder,dataset, modeltype, name_tmpl='train_results{}.json', **suffix_kwargs):
+        super().__init__(model_folder, dataset, modeltype, name_tmpl, **suffix_kwargs)
 
 
 class PoisoningResult(Result):
-    def __init__(self, model_folder, name_tmpl='poisoning_results{}.json', **suffix_kwargs):
-        super().__init__(model_folder, name_tmpl, **suffix_kwargs)
+    def __init__(self, model_folder, dataset, modeltype, name_tmpl='poisoning_results{}.json', **suffix_kwargs):
+        super().__init__(model_folder, name_tmpl, dataset, modeltype, **suffix_kwargs)
 
 
 class LabelFlipResult(Result):
-    def __init__(self, model_folder, name_tmpl='labelflip_results{}.json', **suffix_kwargs):
-        super().__init__(model_folder, name_tmpl, **suffix_kwargs)
+    def __init__(self, model_folder, dataset, modeltype, name_tmpl='labelflip_results{}.json', **suffix_kwargs):
+        super().__init__(model_folder, name_tmpl, dataset, modeltype, **suffix_kwargs)
 
 
 class UnlearningResult(Result):
-    def __init__(self, model_folder, name_tmpl='unlearning_results{}.json', **suffix_kwargs):
-        super().__init__(model_folder, name_tmpl, **suffix_kwargs)
+    def __init__(self, model_folder, dataset, modeltype, name_tmpl='unlearning_results{}.json', **suffix_kwargs):
+        super().__init__(model_folder, dataset, modeltype, name_tmpl, **suffix_kwargs)
 
 
 class IntermediateResult(Result):
-    def __init__(self, model_folder, name_tmpl='intermediate_results{}.json', **suffix_kwargs):
-        super().__init__(model_folder, name_tmpl, **suffix_kwargs)
+    def __init__(self, model_folder, dataset, modeltype, name_tmpl='intermediate_results{}.json', **suffix_kwargs):
+        super().__init__(model_folder, dataset, modeltype, name_tmpl, **suffix_kwargs)
 
 
 class SGDUnlearningResult(Result):
-    def __init__(self, model_folder, name_tmpl='sgd_unlearning_results{}.json', **suffix_kwargs):
-        super().__init__(model_folder, name_tmpl, **suffix_kwargs)
+    def __init__(self, model_folder, dataset, modeltype, name_tmpl='sgd_unlearning_results{}.json', **suffix_kwargs):
+        super().__init__(model_folder, dataset, modeltype, name_tmpl, **suffix_kwargs)
 
 
 class ActivationClusteringResult(Result):
-    def __init__(self, model_folder, name_tmpl='activation_clustering_results{}.json', **suffix_kwargs):
-        super().__init__(model_folder, name_tmpl, **suffix_kwargs)
+    def __init__(self, model_folder,dataset, modeltype, name_tmpl='activation_clustering_results{}.json', **suffix_kwargs):
+        super().__init__(model_folder,dataset, modeltype, name_tmpl, **suffix_kwargs)
 
 
 class MixedResult(Result):
@@ -95,16 +100,16 @@ class MixedResult(Result):
     Saving is disabled to prevent overriding existing results.
     """
 
-    def __init__(self, model_folder, name_tmpl=None, **suffix_kwargs):
-        super().__init__(model_folder, name_tmpl, **suffix_kwargs)
+    def __init__(self, model_folder, dataset, modeltype, name_tmpl=None, **suffix_kwargs):
+        super().__init__(model_folder, dataset, modeltype, name_tmpl, **suffix_kwargs)
 
     def save(self):
         return
 
 
-def save_train_results(model_folder):
+def save_train_results(model_folder, dataset, modeltype):
     """ Non-invasive workaround for current training not utilizing the above classes. Call after `train_retrain`. """
-    result = TrainingResult(model_folder)
+    result = TrainingResult(model_folder, dataset, modeltype)
     with open(os.path.join(model_folder, 'test_performance.json'), 'r') as f:
         result.update(json.load(f))
     result.save()

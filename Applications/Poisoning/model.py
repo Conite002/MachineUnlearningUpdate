@@ -98,7 +98,7 @@ def get_RESNET50_GTSRB(input_shape=(32, 32, 3), num_classes=43, dense_units=512,
     return RESNET50Base(input_shape, num_classes, dense_units, lr_init, sgd)
 
 
-def VGG16Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=False):
+def VGG16Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=False, weight_path=None):
     input_shape = input_shape
     num_classes = num_classes
     dense_units = dense_units
@@ -158,13 +158,23 @@ def VGG16Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=Fals
     model = Model(input_layer, output_layer)
 
     #if optimizer == 'sgd':
-    opt = SGD(learning_rate=lr_init, decay=1e-6, momentum=0.9, nesterov=True)
+    #opt = SGD(learning_rate=lr_init, decay=1e-6, momentum=0.9, nesterov=True)
     #else:
     #    opt = Adam(learning_rate=lr_init)
     
-    model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
+    # model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
     
-    model.summary()
+    if sgd:
+        model.compile(optimizer=SGD(learning_rate=lr_init), loss=categorical_crossentropy, metrics='accuracy')
+    else:
+        model.compile(optimizer=Adam(learning_rate=lr_init, amsgrad=True),
+                      loss=categorical_crossentropy, metrics='accuracy')
+        
+
+    print(f"Loading weights from {weight_path}")
+    if weight_path is not None:
+        model.load_weights(weight_path)
+    # model.summary()
     return model
 
 def get_VGG16_CIFAR100( input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):

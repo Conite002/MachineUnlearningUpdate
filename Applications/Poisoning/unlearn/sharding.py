@@ -7,9 +7,9 @@ from tensorflow.keras.backend import clear_session
 from Applications.Poisoning.unlearn.common import evaluate_model_diff
 from Applications.sharding.ensemble import load_ensemble, Ensemble, retrain_shard
 from Applications.Poisoning.configs.config import Config
-from Applications.Poisoning.model import get_VGG_CIFAR10
+from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100, get_RESNET50_CIFAR100, get_RESNET50_CIFAR10, get_RESNET50_MNIST, get_RESNET50_FASHION, get_RESNET50_SVHN, get_RESNET50_GTSRB
 from Applications.Poisoning.poison.injector import LabelflipInjector
-from Applications.Poisoning.dataset import Cifar10
+from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, GTSRB, Cifar100
 from util import UnlearningResult, MixedResult, measure_time
 
 
@@ -20,7 +20,7 @@ def get_parser():
     return parser
 
 
-def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs):
+def run_experiment(dataset, modeltype, model_folder, train_kwargs, poison_kwargs, unlearn_kwargs):
     data = Cifar10.load()
     (x_train, y_train), _, _ = data
     y_train_orig = y_train.copy()
@@ -35,13 +35,13 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs):
     data = ((x_train, y_train), data[1], data[2])
 
     model_init = lambda: get_VGG_CIFAR10(dense_units=train_kwargs['model_size'])
-    unlearn_shards(model_folder, model_init, data, y_train_orig, injector.injected_idx, train_kwargs, unlearn_kwargs)
+    unlearn_shards(dataset, modeltype, model_folder, model_init, data, y_train_orig, injector.injected_idx, train_kwargs, unlearn_kwargs)
 
 
-def unlearn_shards(model_folder, model_init, data, y_train_orig, delta_idx, train_kwargs, unlearn_kwargs):
+def unlearn_shards(dataset, modeltype, model_folder, model_init, data, y_train_orig, delta_idx, train_kwargs, unlearn_kwargs):
     poisoned_weights = os.path.join(parent(model_folder), 'poisoned_model.hdf5')
     repaired_weights = os.path.join(model_folder, 'repaired_model.hdf5')
-    unlearning_result = UnlearningResult(model_folder)
+    unlearning_result = UnlearningResult(model_folder, dataset, modeltype, 'sharding', **unlearn_kwargs)
 
     # load clean validation ACC and backdoor success rate for reference
     train_results = MixedResult(os.path.join(parent(parent(parent(model_folder))), 'clean'), 'train_results.json').load()
@@ -90,11 +90,12 @@ def evaluate_sharding_unlearn(model_folder, model_init, model_weights, data, del
     return acc_before, acc_after
 
 
-def main(model_folder, config_file):
+def main(model_folder, config_file, dataset, modeltype):
     train_kwargs = Config.from_json(os.path.join(parent(model_folder), 'train_config.json'))
     poison_kwargs = Config.from_json(os.path.join(parent(model_folder), 'poison_config.json'))
     unlearn_kwargs = Config.from_json(os.path.join(model_folder, config_file))
-    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs)
+    
+    run_experiment(dataset, modeltype, model_folder, train_kwargs, poison_kwargs, unlearn_kwargs)
 
 
 if __name__ == '__main__':

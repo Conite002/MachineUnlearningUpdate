@@ -7,9 +7,9 @@ from tensorflow.keras.backend import clear_session
 
 from Applications.Poisoning.unlearn.common import evaluate_model_diff
 from Applications.Poisoning.configs.config import Config
-from Applications.Poisoning.model import get_VGG_CIFAR10
+from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100
 from Applications.Poisoning.poison.injector import LabelflipInjector
-from Applications.Poisoning.dataset import Cifar10
+from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, GTSRB, Cifar100
 from util import UnlearningResult, reduce_dataset, measure_time
 
 
@@ -59,11 +59,11 @@ def run_experiment(dataset, modeltype, model_folder, train_kwargs, poison_kwargs
 
     poisoned_filename = dataset+"_"+modeltype+'_poisoned_model.hdf5'
     repaired_filename = dataset+"_"+modeltype+'_repaired_model.hdf5'
-    eval_fine_tuning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, injector.injected_idx, train_kwargs, unlearn_kwargs)
+    eval_fine_tuning(dataset, modeltype, model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, injector.injected_idx, train_kwargs, unlearn_kwargs)
 
 
-def eval_fine_tuning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, delta_idx, train_kwargs, unlearn_kwargs):
-    unlearning_result = UnlearningResult(model_folder)
+def eval_fine_tuning(dataset, modeltype, model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, delta_idx, train_kwargs, unlearn_kwargs):
+    unlearning_result = UnlearningResult(model_folder, dataset, modeltype)
     poisoned_weights =  os.path.join(parent(model_folder), poisoned_filename)
 
     # prepare unlearning data

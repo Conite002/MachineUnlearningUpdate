@@ -32,7 +32,7 @@ def freeze_layers(model, num_layers_to_freeze):
         for layer in model.layers[-num_layers_to_freeze:]:
             layer.trainable = True
 
-def train(model_init, model_folder, data, epochs, batch_size, model_filename='best_model.hdf5', classes=10, unfreeze_layers_steps=None, **kwargs):
+def train(dataset, modeltype, model_init, model_folder, data, epochs, batch_size, model_filename='best_model.hdf5', classes=10, unfreeze_layers_steps=None, **kwargs):
     os.makedirs(model_folder, exist_ok=True)
     model_save_path = os.path.join(model_folder, model_filename)
     if os.path.exists(model_save_path):
@@ -40,9 +40,9 @@ def train(model_init, model_folder, data, epochs, batch_size, model_filename='be
     
 
     csv_save_path = os.path.join(model_folder, 'train_log.csv')
-    result = TrainingResult(model_folder)
+    result = TrainingResult(model_folder, dataset, modeltype)
 
-    (x_train, y_train), (x_test, y_test), _ = data
+    (x_train, y_train), (x_test, y_test), (x_val, y_val) = data
     model = model_init()
 
     metric_for_min = 'loss'
@@ -84,6 +84,12 @@ def train(model_init, model_folder, data, epochs, batch_size, model_filename='be
     best_loss_epoch = np.argmin(hist[metric_for_min]) + 1 if metric_for_min in hist else 0
     print('Best model has test loss {} after {} epochs'.format(best_loss, best_loss_epoch))
     best_model = model_init()
+
+    # Test if weights are loaded correctly
+    if are_weights_loaded(best_model, model_save_path):
+        print("Model weights loaded successfully.")
+    else:
+        print("Failed to load model weights.")
     best_model.load_weights(model_save_path)
 
     # calculate test metrics on final model
@@ -96,7 +102,26 @@ def train(model_init, model_folder, data, epochs, batch_size, model_filename='be
     report['time'] = training_time
     result.update(report)
     result.save()
+
+    # print evaluation metrics
+    # print("Model evaluation metrics: ", model.metrics_names)
+    # print error metrics
+    # Evaluate with test data
+    results = best_model.evaluate(x_test, y_test, batch_size=100)
+    print('test loss, test acc:', results)
+
     return model_save_path
+
+def are_weights_loaded(model, weights_path):
+    initial_weights = model.get_weights()  # Save initial weights
+    model.load_weights(weights_path)  # Load new weights
+    loaded_weights = model.get_weights()  # Get the loaded weights
+    
+    # Compare initial weights with loaded weights
+    for initial, loaded in zip(initial_weights, loaded_weights):
+        if not np.array_equal(initial, loaded):
+            return True  # Weights have changed
+    return False  # Weights have not changed
 
 
 def get_parser():
@@ -157,7 +182,7 @@ def main(model_folder, dataset="Cifar10", modeltype="RESNET50", classes=10):
         else:
             model_init = lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
             
-    train(model_init, model_folder, data, **train_kwargs, model_filename=dataset  +"_"+modeltype+ '_best_model.hdf5', classes=classes)
+    train(dataset, modeltype, model_init, model_folder, data, **train_kwargs, model_filename=dataset  +"_"+modeltype+ '_best_model.hdf5', classes=classes)
 
 
 if __name__ == '__main__':

@@ -91,9 +91,9 @@ def run_experiment(dataset, modeltype, model_folder, train_kwargs, poison_kwargs
                            y_train_orig, injector.injected_idx, unlearn_kwargs, verbose=verbose)
 
 
-def first_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, delta_idx,
+def first_order_unlearning(dataset, modeltype, model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, delta_idx,
                             unlearn_kwargs, order=1, verbose=False):
-    unlearning_result = UnlearningResult(model_folder)
+    unlearning_result = UnlearningResult(model_folder, dataset, modeltype)
     poisoned_weights = os.path.join(parent(model_folder), poisoned_filename)
     log_dir = model_folder
 
