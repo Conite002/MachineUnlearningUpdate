@@ -87,7 +87,7 @@ def run_experiment(dataset, modeltype, model_folder, train_kwargs, poison_kwargs
 
     poisoned_filename = dataset+"_"+modeltype+'_poisoned_model.hdf5'
     repaired_filename = dataset+"_"+modeltype+'_repaired_model.hdf5'
-    first_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data,
+    first_order_unlearning(dataset, modeltype, model_folder, poisoned_filename, repaired_filename, model_init, data,
                            y_train_orig, injector.injected_idx, unlearn_kwargs, verbose=verbose)
 
 

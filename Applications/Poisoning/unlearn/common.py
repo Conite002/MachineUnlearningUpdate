@@ -30,13 +30,13 @@ def evaluate_model_diff(model, new_model, x_valid, y_valid, diverged=False, verb
 def evaluate_unlearning(model_init, model_weights, data, delta_idx, y_train_orig, unlearn_kwargs, repaired_filepath=None,
                         clean_acc=1.0, verbose=False, cm_dir=None, log_dir=None):
     clear_session()
-    (x_train, y_train), _, (x_valid, y_valid) = data
+    (x_train, y_train), (x_test, y_test), (x_valid, y_valid) = data
     model = model_init()
     params = np.sum(np.product([xi for xi in x.shape]) for x in model.trainable_variables).item()
     model.load_weights(model_weights)
     new_theta, diverged, logs, duration_s = unlearn_update(
         x_train, y_train, y_train_orig, delta_idx, model, x_valid, y_valid, unlearn_kwargs, verbose=verbose, cm_dir=cm_dir, log_dir=log_dir)
-
+    
     new_model = model_init()
     new_model.set_weights(new_theta)
     if repaired_filepath is not None:

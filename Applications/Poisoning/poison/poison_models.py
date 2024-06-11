@@ -29,7 +29,7 @@ def train_poisoned(model_folder, poison_kwargs, train_kwargs, dataset='cifar10',
         if modeltype == 'VGG16':
             model_init = lambda: get_VGG16_CIFAR10(classes)
         else:
-            model_init = lambda: get_RESNET50_CIFAR10(classes)
+            model_init = lambda: get_RESNET50_CIFAR10(num_classes=10, dense_units=512, lr_init=0.001, sgd=False)
     elif dataset == 'Mnist':
         data = Mnist.load()
         if modeltype == 'VGG16':
@@ -91,7 +91,7 @@ def train_poisoned(model_folder, poison_kwargs, train_kwargs, dataset='cifar10',
         n_shards = Config.from_json(os.path.join(model_folder, 'unlearn_config.json'))['n_shards']
         train_models(model_init, model_folder, data, n_shards, model_filename=dataset+"_"+modeltype+'_poisoned_model.hdf5', **train_kwargs)
     else:
-        train(model_init, model_folder, data, model_filename=dataset+"_"+modeltype+'_poisoned_model.hdf5', **train_kwargs)
+        train(dataset, modeltype,model_init, model_folder, data, model_filename=dataset+"_"+modeltype+'_poisoned_model.hdf5', **train_kwargs)
 
 
 def main(model_folder, config_file, dataset='cifar10', modeltype='VGG16', classes=10):

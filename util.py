@@ -47,7 +47,7 @@ class Result(object):
         exclude_keys = ['filepath', 'exists']
         result_dict = {k: v for k, v in self.__dict__.items() if k not in exclude_keys}
         result_dict['dataset'] = self.dataset
-        result_dict['model_type'] = self.model_type
+        result_dict['modeltype'] = self.modeltype
         return result_dict
 
     def update(self, update_dict):

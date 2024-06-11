@@ -14,6 +14,9 @@ from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, G
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, EarlyStopping, LearningRateScheduler
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.optimizers import Adam, SGD
+from sklearn.metrics import accuracy_score
+import numpy as np
+
 
 
 def are_weights_loaded(model, weights_path):
@@ -29,7 +32,7 @@ def are_weights_loaded(model, weights_path):
 
 
 # Evaluate the model
-def evaluate(dataset, modeltype, poisoned_weights):
+def evaluate(dataset, modeltype, poisoned_weights, folder):
     if dataset == "Cifar10":
         data = Cifar10.load()
         if modeltype == "RESNET50":
@@ -81,16 +84,45 @@ def evaluate(dataset, modeltype, poisoned_weights):
     y_pred = model.predict(x_test)
     y_pred = np.argmax(y_pred, axis=1)
     y_true = np.argmax(y_test, axis=1)
-    report = classification_report(y_true, y_pred, output_dict=True)
-    print(report)
-    df_report = pd.DataFrame(report).transpose()
-    csv_path = os.path.join(poisoned_weights, "report.csv")
+
+    accuracy = accuracy_score(y_true, y_pred)
     
-    return csv_path
+    print(f"Accuracy {dataset} model: {accuracy}")
+    
+    return accuracy
 
     
-def main(dataset, modeltype, poisoned_weights):
-    evaluate(dataset, modeltype, poisoned_weights)
+def main(dataset, modeltype, poisoned_weights, folder):
+    evaluate(dataset, modeltype, poisoned_weights, folder)
+
+
+def evaluate_and_save_results(dataset, modeltype, clean_weights, poisoned_weights, first_update_weights, second_update_weights, csv_dir):
+    clean_accuracy = evaluate(dataset, modeltype, clean_weights, "")
+    poisoned_accuracy = evaluate(dataset, modeltype, poisoned_weights, "")
+    first_update_accuracy = evaluate(dataset, modeltype, first_update_weights, "")
+    second_update_accuracy = evaluate(dataset, modeltype, second_update_weights, "")
+
+    results = pd.DataFrame({
+        "Model": [modeltype],
+        "Dataset": [dataset],
+        "Clean": [clean_accuracy],
+        "Poisoned": [poisoned_accuracy],
+        "First Update": [first_update_accuracy],
+        "Second Update": [second_update_accuracy]
+    })
+
+    df = pd.DataFrame(results)
+    cvs_file = os.path.join(csv_dir, f"{dataset}_{modeltype}_results.csv")
+    if not os.path.exists(csv_dir):
+        os.makedirs(csv_dir)
+    else:
+        df.to_csv(cvs_file, mode='a', header=False)
+
+    print("Results saved successfully.")
+    print(df)
+
+    
+
 
 if __name__ == '__main__':
     main()

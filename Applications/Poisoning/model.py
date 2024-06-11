@@ -34,7 +34,7 @@ def identity_block(input_tensor, filters, kernel_size, name=None):
     x = layers.Activation('relu', name=name + '_relu2')(x)
     return x
 
-def RESNET50Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=False):
+def RESNET50Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=False, weight_path=None):
     input_layer = layers.Input(shape=input_shape)
     x = conv_block(input_layer, 64, 7, strides=(2, 2), use_bias=True, name='conv1')
     x = layers.MaxPooling2D(3, strides=2, name='pool1')(x)
@@ -75,8 +75,9 @@ def RESNET50Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=F
         opt = Adam(learning_rate=lr_init)
     
     model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
-    
-    model.summary()
+    print(f"Loading weights from {weight_path}")
+    if weight_path is not None:
+        model.load_weights(weight_path)
     return model
 
 def get_RESNET50_CIFAR100(input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
