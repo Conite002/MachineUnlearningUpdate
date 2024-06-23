@@ -198,3 +198,51 @@ def get_VGG16_SVHN(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_
 def get_VGG16_GTSRB(input_shape=(32, 32, 3), num_classes=43, dense_units=512, lr_init=0.001, sgd=False):
     return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
 
+def extractfeatures_VGG16(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
+    base_model = VGG16(weights='imagenet', include_top=False)
+    
+    for layer in base_model.layers:
+        layer.trainable = False
+    inputs = Input(shape=input_shape, name='image_input')
+    x = base_model(input)
+    feature_extractor = Model(inputs=inputs, outputs=x)
+    feature_extractor.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+    return feature_extractor
+
+
+def extractfeatures_RESNET50(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
+    base_model = ResNet50(weights='imagenet', include_top=False)
+    
+    for layer in base_model.layers:
+        layer.trainable = False
+    inputs = Input(shape=input_shape, name='image_input')
+    x = base_model(input)
+    feature_extractor = Model(inputs=inputs, outputs=x)
+    feature_extractor.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+    return feature_extractor
+
+def classifier_VGG16(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
+    base_model = VGG16(weights="imagenet", include_top=False)
+    inputs = Input(shape=input_shape, name='image_input')
+    x = base_model(inputs)
+    x = Flatten()(x)
+    x = Dense(4096, activation='relu')(x)
+    x = Dropout(0.5)(x)
+    outputs = Dense(num_classes, activation='softmax')(x)
+    model = Model(inputs, outputs)
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    return model
+
+def classifier_RESNET50(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
+    base_model = ResNet50(weights="imagenet", include_top=False)
+    inputs = Input(shape=input_shape, name='image_input')
+    x = base_model(inputs)
+    x = Flatten()(x)
+    x = Dense(4096, activation='relu')(x)
+    x = Dropout(0.5)(x)
+    outputs = Dense(num_classes, activation='softmax')(x)
+    model = Model(inputs, outputs)
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    return model    

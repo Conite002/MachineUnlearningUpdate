@@ -6,7 +6,7 @@ from sklearn.metrics import classification_report
 
 from util import TrainingResult, measure_time
 from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_GTSRB, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_CIFAR100
-from Applications.Poisoning.model import get_RESNET50_CIFAR10, get_RESNET50_GTSRB, get_RESNET50_MNIST, get_RESNET50_FASHION, get_RESNET50_SVHN, get_RESNET50_CIFAR100
+from Applications.Poisoning.model import get_RESNET50_CIFAR10, get_RESNET50_GTSRB, get_RESNET50_MNIST, get_RESNET50_FASHION, get_RESNET50_SVHN, get_RESNET50_CIFAR100, classifier_VGG16, classifier_RESNET50, extractfeatures_RESNET50, extractfeatures_VGG16
 from Applications.Poisoning.configs.config import Config
 from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, GTSRB, Cifar100
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, EarlyStopping, LearningRateScheduler
@@ -48,7 +48,7 @@ def train(dataset, modeltype, model_init, model_folder, data, epochs, batch_size
     loss_ckpt = ModelCheckpoint(model_save_path, monitor=metric_for_min, save_best_only=True,
                                 save_weights_only=True)
     csv_logger = CSVLogger(csv_save_path)
-    early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1, restore_best_weights=True)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=20, verbose=1, restore_best_weights=True)
 
     callbacks = [loss_ckpt, csv_logger, early_stopping, LearningRateScheduler(lr_schedule, verbose=1)]
 
@@ -137,10 +137,22 @@ def main(model_folder, dataset="Cifar10", modeltype="RESNET50", classes=10):
 
     if dataset == "Cifar10":
         data = Cifar10.load()
+
         if modeltype == "RESNET50":
             model_init = lambda: get_RESNET50_CIFAR10(dense_units=train_kwargs['model_size'])
-        else:
+        elif modeltype == "VGG16":
             model_init = lambda: get_VGG16_CIFAR10(dense_units=train_kwargs['model_size'])
+        elif modeltype == "extractfeatures_VGG16":
+            model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'])
+        elif modeltype == "extractfeatures_RESNET50":
+            model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'])
+        elif modeltype == "classifier_VGG16":
+            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'], classifier=True)
+        elif modeltype == "classifier_RESNET50":
+            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'], classifier=True)
+        else:
+            model_init = lambda: get_VGG16_CIFAR10(dense_units=train_kwargs['model_size'])        
+        
     if dataset == "Mnist":
         data = Mnist.load()
         classes = 10
@@ -154,16 +166,37 @@ def main(model_folder, dataset="Cifar10", modeltype="RESNET50", classes=10):
         classes = 10
         if modeltype == "RESNET50":
             model_init = lambda: get_RESNET50_FASHION(dense_units=train_kwargs['model_size'])
+        elif modeltype == "VGG16":
+            model_init = lambda: get_VGG16_FASHION(dense_units=train_kwargs['model_size'])
+        elif modeltype == "extractfeatures_VGG16":
+            model_init = lambda: get_VGG16_FASHION(dense_units=train_kwargs['model_size'], extract_features=True)
+        elif modeltype == "extractfeatures_RESNET50":
+            model_init = lambda: get_RESNET50_FASHION(dense_units=train_kwargs['model_size'], extract_features=True)
+        elif modeltype == "classifier_VGG16":
+            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'], classifier=True)
+        elif modeltype == "classifier_RESNET50":
+            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'], classifier=True)
         else:
             model_init = lambda: get_VGG16_FASHION(dense_units=train_kwargs['model_size'])
-    
+
     if dataset == "SVHN":
         data = SVHN.load()
         classes = 10
         if modeltype == "RESNET50":
             model_init = lambda: get_RESNET50_SVHN(dense_units=train_kwargs['model_size'])
+        elif modeltype == "VGG16":
+            model_init = lambda: get_VGG16_SVHN(dense_units=train_kwargs['model_size'])
+        elif modeltype == "extractfeatures_VGG16":
+            model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'])
+        elif modeltype == "extractfeatures_RESNET50":
+            model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'])
+        elif modeltype == "classifier_VGG16":
+            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'], classifier=True)
+        elif modeltype == "classifier_RESNET50":
+            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'], classifier=True)
         else:
             model_init = lambda: get_VGG16_SVHN(dense_units=train_kwargs['model_size'])
+
 
     if dataset == "GTSRB":
         data = GTSRB.load()
@@ -178,12 +211,23 @@ def main(model_folder, dataset="Cifar10", modeltype="RESNET50", classes=10):
         classes = 100
         if modeltype == "RESNET50":
             model_init = lambda: get_RESNET50_CIFAR100(dense_units=train_kwargs['model_size'])
+        elif modeltype == "VGG16":
+            model_init = lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
+        elif modeltype == "extractfeatures_VGG16":
+            model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'])
+        elif modeltype == "extractfeatures_RESNET50":
+            model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'])
+        elif modeltype == "classifier_VGG16":
+            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'], classifier=True)
+        elif modeltype == "classifier_RESNET50":
+            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'], classifier=True)
         else:
             model_init = lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
-            
+
     train(dataset, modeltype, model_init, model_folder, data, **train_kwargs, model_filename=dataset  +"_"+modeltype+ '_best_model.hdf5', classes=classes)
 
 
+    
 if __name__ == '__main__':
     args = get_parser().parse_args()
     main(**vars(args))
