@@ -32,47 +32,51 @@ def are_weights_loaded(model, weights_path):
 
 
 # Evaluate the model
-def evaluate(dataset, modeltype, poisoned_weights, folder):
+def evaluate(dataset, modelname, poisoned_weights, folder):
     if dataset == "Cifar10":
         data = Cifar10.load()
-        if modeltype == "RESNET50":
+        if modelname == "RESNET50":
             model = get_RESNET50_CIFAR10()
         else:
             model = get_VGG16_CIFAR10()
-    if dataset == "Mnist":
+    elif dataset == "Mnist":
         data = Mnist.load()
-        if modeltype == "RESNET50":
+        if modelname == "RESNET50":
             model = get_RESNET50_MNIST()
         else:
             model = get_VGG16_MNIST()
 
-    if dataset == "FashionMnist":
+    elif dataset == "FashionMnist":
         data = FashionMnist.load()
-        if modeltype == "RESNET50":
+        if modelname == "RESNET50":
             model = get_RESNET50_FASHION()
         else:
             model = get_VGG16_FASHION()
 
-    if dataset == "SVHN":
+    elif dataset == "SVHN":
         data = SVHN.load()
-        if modeltype == "RESNET50":
+        if modelname == "RESNET50":
             model = get_RESNET50_SVHN()
         else:
             model = get_VGG16_SVHN()
 
-    if dataset == "GTSRB":
+    elif dataset == "GTSRB":
         data = GTSRB.load()
-        if modeltype == "RESNET50":
+        if modelname == "RESNET50":
             model = get_RESNET50_GTSRB()
         else:
             model = get_VGG16_GTSRB()
 
-    if dataset == "Cifar100":
+    elif dataset == "Cifar100":
         data = Cifar100.load()
-        if modeltype == "RESNET50":
+        if modelname == "RESNET50":
             model = get_RESNET50_CIFAR100()
         else:
             model = get_VGG16_CIFAR100()
+
+    else:
+        raise ValueError("Invalid dataset name")
+        data = None
     (x_train, y_train), (x_test, y_test), (x_val, y_val) = data
 
     if are_weights_loaded(model, poisoned_weights):
@@ -92,18 +96,18 @@ def evaluate(dataset, modeltype, poisoned_weights, folder):
     return accuracy
 
     
-def main(dataset, modeltype, poisoned_weights, folder):
-    evaluate(dataset, modeltype, poisoned_weights, folder)
+def main(dataset, modelname, poisoned_weights, folder):
+    evaluate(dataset, modelname, poisoned_weights, folder)
 
 
-def evaluate_and_save_results(dataset, modeltype, clean_weights, poisoned_weights, first_update_weights, second_update_weights, csv_dir):
-    clean_accuracy = evaluate(dataset, modeltype, clean_weights, "")
-    poisoned_accuracy = evaluate(dataset, modeltype, poisoned_weights, "")
-    first_update_accuracy = evaluate(dataset, modeltype, first_update_weights, "")
-    second_update_accuracy = evaluate(dataset, modeltype, second_update_weights, "")
+def evaluate_and_save_results(dataset, modelname, clean_weights, poisoned_weights, first_update_weights, second_update_weights, csv_dir):
+    clean_accuracy = evaluate(dataset, modelname, clean_weights, "")
+    poisoned_accuracy = evaluate(dataset, modelname, poisoned_weights, "")
+    first_update_accuracy = evaluate(dataset, modelname, first_update_weights, "")
+    second_update_accuracy = evaluate(dataset, modelname, second_update_weights, "")
 
     results = pd.DataFrame({
-        "Model": [modeltype],
+        "Model": [modelname],
         "Dataset": [dataset],
         "Clean": [clean_accuracy],
         "Poisoned": [poisoned_accuracy],
@@ -112,7 +116,7 @@ def evaluate_and_save_results(dataset, modeltype, clean_weights, poisoned_weight
     })
 
     df = pd.DataFrame(results)
-    cvs_file = os.path.join(csv_dir, f"{dataset}_{modeltype}_results.csv")
+    cvs_file = os.path.join(csv_dir, f"{dataset}_{modelname}_results.csv")
     if not os.path.exists(csv_dir):
         os.makedirs(csv_dir)
     else:
