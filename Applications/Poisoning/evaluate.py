@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger
 from sklearn.metrics import classification_report
+from pathlib import Path
 
 from util import TrainingResult, measure_time
 from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_GTSRB, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_CIFAR100, extractfeatures_RESNET50, extractfeatures_VGG16, classifier_RESNET50, classifier_VGG16
@@ -123,7 +124,9 @@ def evaluate(model_folder, dataset, modelname, type):
         raise ValueError("Invalid dataset name")
         data = None
     (x_train, y_train), (x_test, y_test), (x_val, y_val) = data
-    weights_folder = model_folder +"/"+dataset+"_"+modelname+"_"+type+"_model"+".hdf5"
+
+    model_folder = Path(model_folder)
+    weights_folder = model_folder / f"{dataset}_{modelname}_{type}_model.hdf5"
     if are_weights_loaded(model, weights_folder):
         print("Model weights loaded successfully.")
     else:
@@ -146,17 +149,22 @@ def main(model_folder, dataset, modelname, type):
 
 
 def evaluate_and_save_results(model_folder, dataset, modelname, clean_folder, poisoned_folder, first_update_folder, second_update_folder, csv_dir):
-    poisoned_weights = poisoned_folder +"/"+dataset+"_"+modelname+"_poisoned_model.hdf5"
-    first_update_weights = first_update_folder +"/"+dataset+"_"+modelname+"_repaired_model.hdf5"
-    second_update_weights = second_update_folder +"/"+dataset+"_"+modelname+"_repaired_model.hdf5"
-    clean_weights = clean_folder +"/"+dataset+"_"+modelname+"_best_model.hdf5"
+   
+    poisoned_folder = Path(poisoned_folder)
+    first_update_folder = Path(first_update_folder)
+    second_update_folder = Path(second_update_folder)
+    clean_folder = Path(clean_folder)
 
+    poisoned_weights = poisoned_folder / f"{dataset}_{modelname}_poisoned_model.hdf5"
+    first_update_weights = first_update_folder / f"{dataset}_{modelname}_repaired_model.hdf5"
+    second_update_weights = second_update_folder / f"{dataset}_{modelname}_repaired_model.hdf5"
+    clean_weights = clean_folder / f"{dataset}_{modelname}_best_model.hdf5"
 
     clean_accuracy = evaluate(model_folder=clean_folder ,dataset=dataset, modelname=modelname, type="best")
     poisoned_accuracy = evaluate(model_folder=poisoned_folder, dataset=dataset, modelname=modelname, type="poisoned")
     first_update_accuracy = evaluate(model_folder=first_update_folder, dataset=dataset, modelname=modelname, type="repaired")
     second_update_accuracy = evaluate(model_folder=second_update_folder, dataset=dataset, modelname=modelname, type="repaired")
-    
+
 
     results = pd.DataFrame({
         "Model": [modelname],
