@@ -147,9 +147,9 @@ def main(model_folder, dataset="Cifar10", modelname="RESNET50", classes=10):
         elif modelname == "extractfeatures_RESNET50":
             model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'])
         elif modelname == "classifier_VGG16":
-            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'], classifier=True)
+            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'])
         elif modelname == "classifier_RESNET50":
-            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'], classifier=True)
+            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'])
         else:
             model_init = lambda: get_VGG16_CIFAR10(dense_units=train_kwargs['model_size'])        
         
@@ -173,9 +173,9 @@ def main(model_folder, dataset="Cifar10", modelname="RESNET50", classes=10):
         elif modelname == "extractfeatures_RESNET50":
             model_init = lambda: get_RESNET50_FASHION(dense_units=train_kwargs['model_size'], extract_features=True)
         elif modelname == "classifier_VGG16":
-            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'], classifier=True)
+            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'])
         elif modelname == "classifier_RESNET50":
-            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'], classifier=True)
+            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'])
         else:
             model_init = lambda: get_VGG16_FASHION(dense_units=train_kwargs['model_size'])
 
@@ -191,9 +191,9 @@ def main(model_folder, dataset="Cifar10", modelname="RESNET50", classes=10):
         elif modelname == "extractfeatures_RESNET50":
             model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'])
         elif modelname == "classifier_VGG16":
-            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'], classifier=True)
+            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'])
         elif modelname == "classifier_RESNET50":
-            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'], classifier=True)
+            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'])
         else:
             model_init = lambda: get_VGG16_SVHN(dense_units=train_kwargs['model_size'])
 
@@ -218,9 +218,9 @@ def main(model_folder, dataset="Cifar10", modelname="RESNET50", classes=10):
         elif modelname == "extractfeatures_RESNET50":
             model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'])
         elif modelname == "classifier_VGG16":
-            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'], classifier=True)
+            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'])
         elif modelname == "classifier_RESNET50":
-            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'], classifier=True)
+            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'])
         else:
             model_init = lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
 
