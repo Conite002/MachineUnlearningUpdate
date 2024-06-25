@@ -48,7 +48,7 @@ def train(dataset, modelname, model_init, model_folder, data, epochs, batch_size
     loss_ckpt = ModelCheckpoint(model_save_path, monitor=metric_for_min, save_best_only=True,
                                 save_weights_only=True)
     csv_logger = CSVLogger(csv_save_path)
-    early_stopping = EarlyStopping(monitor='val_loss', patience=12, verbose=1, restore_best_weights=True)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=15, verbose=1, restore_best_weights=True)
 
     callbacks = [loss_ckpt, csv_logger, early_stopping, LearningRateScheduler(lr_schedule, verbose=1)]
 
