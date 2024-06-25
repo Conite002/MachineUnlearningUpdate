@@ -141,7 +141,8 @@ def first_order_unlearning(dataset, modelname, model_folder, poisoned_filename, 
     log_dir = model_folder
 
     # start unlearning hyperparameter search for the poisoned model
-    with open(model_folder.parents[2]/'clean'/'train_results.json', 'r') as f:
+    train_result = dataset+"_"+modelname+'_train_results.json'
+    with open(model_folder.parents[2]/'clean'/train_result, 'r') as f:
         clean_acc = json.load(f)['accuracy']
     repaired_filepath = os.path.join(model_folder, repaired_filename)
     cm_dir = os.path.join(model_folder, 'cm')

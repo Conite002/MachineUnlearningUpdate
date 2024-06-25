@@ -32,7 +32,7 @@ def are_weights_loaded(model, weights_path):
 
 
 # Evaluate the model
-def evaluate(dataset, modelname, poisoned_weights, folder):
+def evaluate(model_folder, dataset, modelname, type):
     if dataset == "Cifar10":
         data = Cifar10.load()
         
@@ -117,14 +117,14 @@ def evaluate(dataset, modelname, poisoned_weights, folder):
             model = classifier_VGG16()
         elif modelname == "classifier_RESNET50":
             model = classifier_RESNET50()
-            
+
 
     else:
         raise ValueError("Invalid dataset name")
         data = None
     (x_train, y_train), (x_test, y_test), (x_val, y_val) = data
-
-    if are_weights_loaded(model, poisoned_weights):
+    weights_folder = model_folder +"/"+dataset+"_"+modelname+"_"+type+"_model"+".hdf5"
+    if are_weights_loaded(model, weights_folder):
         print("Model weights loaded successfully.")
     else:
         print("Failed to load model weights.")
@@ -141,15 +141,22 @@ def evaluate(dataset, modelname, poisoned_weights, folder):
     return accuracy
 
     
-def main(dataset, modelname, poisoned_weights, folder):
-    evaluate(dataset, modelname, poisoned_weights, folder)
+def main(model_folder, dataset, modelname, type):
+    evaluate(model_folder, dataset, modelname, type)
 
 
-def evaluate_and_save_results(dataset, modelname, clean_weights, poisoned_weights, first_update_weights, second_update_weights, csv_dir):
-    clean_accuracy = evaluate(dataset, modelname, clean_weights, "")
-    poisoned_accuracy = evaluate(dataset, modelname, poisoned_weights, "")
-    first_update_accuracy = evaluate(dataset, modelname, first_update_weights, "")
-    second_update_accuracy = evaluate(dataset, modelname, second_update_weights, "")
+def evaluate_and_save_results(model_folder, dataset, modelname, clean_folder, poisoned_folder, first_update_folder, second_update_folder, csv_dir):
+    poisoned_weights = poisoned_folder +"/"+dataset+"_"+modelname+"_poisoned_model.hdf5"
+    first_update_weights = first_update_folder +"/"+dataset+"_"+modelname+"_repaired_model.hdf5"
+    second_update_weights = second_update_folder +"/"+dataset+"_"+modelname+"_repaired_model.hdf5"
+    clean_weights = clean_folder +"/"+dataset+"_"+modelname+"_best_model.hdf5"
+
+
+    clean_accuracy = evaluate(model_folder=clean_folder ,dataset=dataset, modelname=modelname, type="best")
+    poisoned_accuracy = evaluate(model_folder=poisoned_folder, dataset=dataset, modelname=modelname, type="poisoned")
+    first_update_accuracy = evaluate(model_folder=first_update_folder, dataset=dataset, modelname=modelname, type="repaired")
+    second_update_accuracy = evaluate(model_folder=second_update_folder, dataset=dataset, modelname=modelname, type="repaired")
+    
 
     results = pd.DataFrame({
         "Model": [modelname],

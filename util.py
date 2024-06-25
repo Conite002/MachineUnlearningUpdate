@@ -20,7 +20,7 @@ class Result(object):
     def __init__(self, base_path, name_tmpl, dataset, modeltype, **suffix_kwargs):
         self.dataset = dataset
         self.modeltype = modeltype
-        filename = name_tmpl
+        filename = dataset + '_' + '_' + modeltype + '_' + name_tmpl
         if len(suffix_kwargs) > 0:
             # assemble name to `base_name{-k0_v0-k1_v1}.json`
             suffix = '-'.join([f'{k}_{suffix_kwargs[k]}' for k in sorted(suffix_kwargs)])
@@ -60,37 +60,37 @@ class Result(object):
 
 
 class TrainingResult(Result):
-    def __init__(self, model_folder,dataset, modeltype, name_tmpl='train_results{}.json', **suffix_kwargs):
+    def __init__(self, model_folder,dataset, modeltype, name_tmpl='train_results.json', **suffix_kwargs):
         super().__init__(model_folder, dataset, modeltype, name_tmpl, **suffix_kwargs)
 
 
 class PoisoningResult(Result):
-    def __init__(self, model_folder, dataset, modeltype, name_tmpl='poisoning_results{}.json', **suffix_kwargs):
+    def __init__(self, model_folder, dataset, modeltype, name_tmpl='poisoning_results.json', **suffix_kwargs):
         super().__init__(model_folder, name_tmpl, dataset, modeltype, **suffix_kwargs)
 
 
 class LabelFlipResult(Result):
-    def __init__(self, model_folder, dataset, modeltype, name_tmpl='labelflip_results{}.json', **suffix_kwargs):
+    def __init__(self, model_folder, dataset, modeltype, name_tmpl='labelflip_results.json', **suffix_kwargs):
         super().__init__(model_folder, name_tmpl, dataset, modeltype, **suffix_kwargs)
 
 
 class UnlearningResult(Result):
-    def __init__(self, model_folder, dataset, modeltype, name_tmpl='unlearning_results{}.json', **suffix_kwargs):
+    def __init__(self, model_folder, dataset, modeltype, name_tmpl='unlearning_results.json', **suffix_kwargs):
         super().__init__(model_folder, dataset, modeltype, name_tmpl, **suffix_kwargs)
 
 
 class IntermediateResult(Result):
-    def __init__(self, model_folder, dataset, modeltype, name_tmpl='intermediate_results{}.json', **suffix_kwargs):
+    def __init__(self, model_folder, dataset, modeltype, name_tmpl='intermediate_results.json', **suffix_kwargs):
         super().__init__(model_folder, dataset, modeltype, name_tmpl, **suffix_kwargs)
 
 
 class SGDUnlearningResult(Result):
-    def __init__(self, model_folder, dataset, modeltype, name_tmpl='sgd_unlearning_results{}.json', **suffix_kwargs):
+    def __init__(self, model_folder, dataset, modeltype, name_tmpl='sgd_unlearning_results.json', **suffix_kwargs):
         super().__init__(model_folder, dataset, modeltype, name_tmpl, **suffix_kwargs)
 
 
 class ActivationClusteringResult(Result):
-    def __init__(self, model_folder,dataset, modeltype, name_tmpl='activation_clustering_results{}.json', **suffix_kwargs):
+    def __init__(self, model_folder,dataset, modeltype, name_tmpl='activation_clustering_results.json', **suffix_kwargs):
         super().__init__(model_folder,dataset, modeltype, name_tmpl, **suffix_kwargs)
 
 
