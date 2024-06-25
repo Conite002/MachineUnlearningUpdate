@@ -28,45 +28,104 @@ def train_poisoned(model_folder, poison_kwargs, train_kwargs, dataset='cifar10',
         data = Cifar10.load()
         if modelname == 'VGG16':
             model_init = lambda: get_VGG16_CIFAR10(classes)
+        elif modelname == 'RESNET50':
+            model_init = lambda: get_RESNET50_CIFAR10(classes)
+        elif modelname == 'extractfeatures_VGG16':
+            model_init = lambda: extractfeatures_VGG16(classes)
+        elif modelname == 'extractfeatures_RESNET50':
+            model_init = lambda: extractfeatures_RESNET50(classes)
+        elif modelname == 'classifier_VGG16':
+            model_init = lambda: classifier_VGG16(classes)
+        elif modelname == 'classifier_RESNET50':
+            model_init = lambda: classifier_RESNET50(classes)
         else:
-            model_init = lambda: get_RESNET50_CIFAR10(num_classes=10, dense_units=512, lr_init=0.001, sgd=False)
+            raise ValueError(f"Unknown modelname: {modelname}")
+
     elif dataset == 'Mnist':
         data = Mnist.load()
         if modelname == 'VGG16':
             model_init = lambda: get_VGG16_MNIST(classes)
             print(f"Classes: {classes}, Modelname: {modelname}")
-        else:
+        elif modelname == 'RESNET50':
             model_init = lambda: get_RESNET50_MNIST(classes)
+        elif modelname == 'extractfeatures_VGG16':
+            model_init = lambda: extractfeatures_VGG16(classes)
+        elif modelname == 'extractfeatures_RESNET50':
+            model_init = lambda: extractfeatures_RESNET50(classes)
+        elif modelname == 'classifier_VGG16':
+            model_init = lambda: classifier_VGG16(classes)
+        elif modelname == 'classifier_RESNET50':
+            model_init = lambda: classifier_RESNET50(classes)
+        else:
+            raise ValueError(f"Unknown modelname: {modelname}")
+        
 
     elif dataset == 'FashionMnist':
         data = FashionMnist.load()
         if modelname == 'VGG16':
             model_init = lambda: get_VGG16_FASHION(classes)
-        else:
+        elif modelname == 'RESNET50':
             model_init = lambda: get_RESNET50_FASHION(classes)
-    
+        elif modelname == 'extractfeatures_VGG16':
+            model_init = lambda: extractfeatures_VGG16(classes)
+        elif modelname == 'extractfeatures_RESNET50':
+            model_init = lambda: extractfeatures_RESNET50(classes)
+        elif modelname == 'classifier_VGG16':
+            model_init = lambda: classifier_VGG16(classes)
+        elif modelname == 'classifier_RESNET50':
+            model_init = lambda: classifier_RESNET50(classes)
+        else:
+            raise ValueError(f"Unknown modelname: {modelname}")
     elif dataset == 'SVHN':
         data = SVHN.load()
         if modelname == 'VGG16':
             model_init = lambda: get_VGG16_SVHN(classes)
-        else:
+        elif modelname == 'RESNET50':
             model_init = lambda: get_RESNET50_SVHN(classes)
-
-    elif dataset == 'GTSRB':
-        data = GTSRB.load()
-        if modelname == 'VGG16':
-            model_init = lambda: get_VGG16_GTSRB(classes)
+        elif modelname == 'extractfeatures_VGG16':
+            model_init = lambda: extractfeatures_VGG16(classes)
+        elif modelname == 'extractfeatures_RESNET50':
+            model_init = lambda: extractfeatures_RESNET50(classes)
+        elif modelname == 'classifier_VGG16':
+            model_init = lambda: classifier_VGG16(classes)
+        elif modelname == 'classifier_RESNET50':
+            model_init = lambda: classifier_RESNET50(classes)
         else:
-            model_init = lambda: get_RESNET50_GTSRB(classes)
-
+            raise ValueError(f"Unknown modelname: {modelname}")
+        
+    elif dataset == 'FashionMnist':
+        data = FashionMnist.load()
+        if modelname == 'VGG16':
+            model_init = lambda: get_VGG16_FASHION(classes)
+        elif modelname == 'RESNET50':
+            model_init = lambda: get_RESNET50_FASHION(classes)
+        elif modelname == 'extractfeatures_VGG16':
+            model_init = lambda: extractfeatures_VGG16(classes)
+        elif modelname == 'extractfeatures_RESNET50':
+            model_init = lambda: extractfeatures_RESNET50(classes)
+        elif modelname == 'classifier_VGG16':
+            model_init = lambda: classifier_VGG16(classes)
+        elif modelname == 'classifier_RESNET50':
+            model_init = lambda: classifier_RESNET50(classes)
+        else:
+            raise ValueError(f"Unknown modelname: {modelname}")
+        
     elif dataset == 'Cifar100':
         data = Cifar100.load()
         if modelname == 'VGG16':
             model_init = lambda: get_VGG16_CIFAR100(classes)
-        else:
+        elif modelname == 'RESNET50':
             model_init = lambda: get_RESNET50_CIFAR100(classes)
-    else:
-        raise ValueError(f"Unknown dataset: {dataset}")
+        elif modelname == 'extractfeatures_VGG16':
+            model_init = lambda: extractfeatures_VGG16(classes)
+        elif modelname == 'extractfeatures_RESNET50':
+            model_init = lambda: extractfeatures_RESNET50(classes)
+        elif modelname == 'classifier_VGG16':
+            model_init = lambda: classifier_VGG16(classes)
+        elif modelname == 'classifier_RESNET50':
+            model_init = lambda: classifier_RESNET50(classes)
+        else:
+            raise ValueError(f"Unknown modelname: {modelname}")
         
     if data is None or model_init is None:
         raise ValueError(f"Data or model initialization function not properly set for dataset: {dataset} and modelname: {modelname}")

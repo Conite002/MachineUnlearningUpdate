@@ -7,7 +7,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger
 from sklearn.metrics import classification_report
 
 from util import TrainingResult, measure_time
-from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_GTSRB, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_CIFAR100
+from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_GTSRB, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_CIFAR100, extractfeatures_RESNET50, extractfeatures_VGG16, classifier_RESNET50, classifier_VGG16
 from Applications.Poisoning.model import get_RESNET50_CIFAR10, get_RESNET50_GTSRB, get_RESNET50_MNIST, get_RESNET50_FASHION, get_RESNET50_SVHN, get_RESNET50_CIFAR100
 from Applications.Poisoning.configs.config import Config
 from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, GTSRB, Cifar100
@@ -35,44 +35,89 @@ def are_weights_loaded(model, weights_path):
 def evaluate(dataset, modelname, poisoned_weights, folder):
     if dataset == "Cifar10":
         data = Cifar10.load()
-        if modelname == "RESNET50":
-            model = get_RESNET50_CIFAR10()
-        else:
+        
+        if modelname == "VGG16":
             model = get_VGG16_CIFAR10()
+        elif modelname == "RESNET50":
+            model = get_RESNET50_CIFAR10()
+        elif modelname == "extractfeatures_VGG16":
+            model = extractfeatures_VGG16()
+        elif modelname == "extractfeatures_RESNET50":
+            model = extractfeatures_RESNET50()
+        elif modelname == "classifier_VGG16":
+            model = classifier_VGG16()
+        elif modelname == "classifier_RESNET50":
+            model = classifier_RESNET50()
+        else:
+            raise ValueError(f"Unknown modelname: {modelname}")
     elif dataset == "Mnist":
         data = Mnist.load()
         if modelname == "RESNET50":
             model = get_RESNET50_MNIST()
-        else:
+        elif modelname == "VGG16":
             model = get_VGG16_MNIST()
+        elif modelname == "extractfeatures_VGG16":
+            model = extractfeatures_VGG16()
+        elif modelname == "extractfeatures_RESNET50":
+            model = extractfeatures_RESNET50()
+        elif modelname == "classifier_VGG16":
+            model = classifier_VGG16()
+        elif modelname == "classifier_RESNET50":
+            model = classifier_RESNET50()
+        else:
+            raise ValueError(f"Unknown modelname: {modelname}")
+
+
 
     elif dataset == "FashionMnist":
         data = FashionMnist.load()
-        if modelname == "RESNET50":
-            model = get_RESNET50_FASHION()
-        else:
+        if modelname == "VGG16":
             model = get_VGG16_FASHION()
-
+        elif modelname == "RESNET50":
+            model = get_RESNET50_FASHION()
+        elif modelname == "extractfeatures_VGG16":
+            model = extractfeatures_VGG16()
+        elif modelname == "extractfeatures_RESNET50":
+            model = extractfeatures_RESNET50()
+        elif modelname == "classifier_VGG16":
+            model = classifier_VGG16()
+        elif modelname == "classifier_RESNET50":
+            model = classifier_RESNET50()
+        else:
+            raise ValueError(f"Unknown modelname: {modelname}")
+        
     elif dataset == "SVHN":
         data = SVHN.load()
-        if modelname == "RESNET50":
-            model = get_RESNET50_SVHN()
-        else:
+        if modelname == "VGG16":
             model = get_VGG16_SVHN()
-
-    elif dataset == "GTSRB":
-        data = GTSRB.load()
-        if modelname == "RESNET50":
-            model = get_RESNET50_GTSRB()
+        elif modelname == "RESNET50":
+            model = get_RESNET50_SVHN()
+        elif modelname == "extractfeatures_VGG16":
+            model = extractfeatures_VGG16()
+        elif modelname == "extractfeatures_RESNET50":
+            model = extractfeatures_RESNET50()
+        elif modelname == "classifier_VGG16":
+            model = classifier_VGG16()
+        elif modelname == "classifier_RESNET50":
+            model = classifier_RESNET50()
         else:
-            model = get_VGG16_GTSRB()
-
+            raise ValueError(f"Unknown modelname: {modelname}")
+        
     elif dataset == "Cifar100":
         data = Cifar100.load()
-        if modelname == "RESNET50":
-            model = get_RESNET50_CIFAR100()
-        else:
+        if modelname == "VGG16":
             model = get_VGG16_CIFAR100()
+        elif modelname == "RESNET50":
+            model = get_RESNET50_CIFAR100()
+        elif modelname == "extractfeatures_VGG16":
+            model = extractfeatures_VGG16()
+        elif modelname == "extractfeatures_RESNET50":
+            model = extractfeatures_RESNET50()
+        elif modelname == "classifier_VGG16":
+            model = classifier_VGG16()
+        elif modelname == "classifier_RESNET50":
+            model = classifier_RESNET50()
+            
 
     else:
         raise ValueError("Invalid dataset name")

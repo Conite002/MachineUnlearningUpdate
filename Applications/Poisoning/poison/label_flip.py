@@ -5,7 +5,7 @@ import numpy as np
 from tensorflow.keras.losses import categorical_crossentropy
 
 from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, GTSRB, Cifar100
-from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100
+from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100, extractfeatures_RESNET50, get_RESNET50_CIFAR10, get_RESNET50_CIFAR100, get_RESNET50_SVHN, get_RESNET50_MNIST, get_RESNET50_FASHION, classifier_VGG16, classifier_RESNET50, extractfeatures_VGG16
 from Applications.Poisoning.train import train
 from util import UnlearningResult, MixedResult, GradientLoggingContext, LabelFlipResult, save_train_results
 
@@ -60,7 +60,6 @@ def flip_labels(Y, budget=200, seed=42, target=-1, verbose=False):
     if target >= 0:
         idx = idx[np.argwhere(np.argmax(Y[idx], axis=1) == target)[:, 0]]
 
-    # map to pairs ((0, 9), (1, 8), ...)
     sources = list(range(10))
     targets = sources[::-1]
     idx_list = []
@@ -94,7 +93,7 @@ def get_parser():
 
 
 def main(model_folder, budget, batch_size=64, lr_init=1e-4,
-         epochs=100, base_seed=42, n_repititions=1, dataset="cifar10", modeltype="VGG16"):
+         epochs=100, base_seed=42, n_repititions=1, dataset="cifar10", modelname="VGG16"):
     train_kwargs = dict(batch_size=batch_size, lr_init=lr_init, epochs=epochs)
 
     # train and evaluate clean model as reference
@@ -107,26 +106,76 @@ def main(model_folder, budget, batch_size=64, lr_init=1e-4,
         model_folder = os.path.join(model_folder, f'budget-{budget}', f'seed{seed}')
         if dataset == "Cifar10":
             data = Cifar10.load()
-            eval_flipped_model(dataset, modeltype, data, get_VGG16_CIFAR10, model_folder, budget, seed, **train_kwargs)
-        if dataset == "Mnist":
+            if modelname == "VGG16":
+                eval_flipped_model(dataset, modelname, data, get_VGG16_CIFAR10, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "RESNET50":
+                eval_flipped_model(dataset, modelname, data, get_RESNET50_CIFAR10, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "classifier_VGG16":
+                eval_flipped_model(dataset, modelname, data, classifier_VGG16, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "classifier_RESNET50":
+                eval_flipped_model(dataset, modelname, data, classifier_RESNET50, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "extractfeatures_VGG16":
+                eval_flipped_model(dataset, modelname, data, extractfeatures_VGG16, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "extractfeatures_RESNET50":
+                eval_flipped_model(dataset, modelname, data, extractfeatures_VGG16, model_folder, budget, seed, **train_kwargs)
+
+            else:
+                raise ValueError("Invalid model name")
+            
+        elif dataset == "Mnist":
             data = Mnist.load()
-            eval_flipped_model(dataset,modeltype,  data, get_VGG16_MNIST, model_folder, budget, seed, **train_kwargs)
-        if dataset == "FashionMnist":
+            if modelname == "VGG16":
+                eval_flipped_model(dataset,modelname,  data, get_VGG16_MNIST, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "RESNET50":
+                eval_flipped_model(dataset, modelname, data, get_RESNET50_MNIST, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "classifier_VGG16":
+                eval_flipped_model(dataset, modelname, data, classifier_VGG16, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "classifier_RESNET50":
+                eval_flipped_model(dataset, modelname, data, classifier_RESNET50, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "extractfeatures_VGG16":
+                eval_flipped_model(dataset, modelname, data, extractfeatures_VGG16, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "extractfeatures_RESNET50":
+                eval_flipped_model(dataset, modelname, data, extractfeatures_VGG16, model_folder, budget, seed, **train_kwargs)
+            else:
+                raise ValueError("Invalid model name")
+            
+        elif dataset == "FashionMnist":
             data = FashionMnist.load()
-            eval_flipped_model(dataset, modeltype, data, get_VGG16_FASHION, model_folder, budget, seed, **train_kwargs)
-        if dataset == "SVHN":
+            if modelname == "VGG16":
+                eval_flipped_model(dataset, modelname, data, get_VGG16_FASHION, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "RESNET50":
+                eval_flipped_model(dataset, modelname, data, get_RESNET50_FASHION, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "classifier_VGG16":
+                eval_flipped_model(dataset, modelname, data, classifier_VGG16, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "classifier_RESNET50":
+                eval_flipped_model(dataset, modelname, data, classifier_RESNET50, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "extractfeatures_VGG16":
+                eval_flipped_model(dataset, modelname, data, extractfeatures_VGG16, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "extractfeatures_RESNET50":
+                eval_flipped_model(dataset, modelname, data, extractfeatures_VGG16, model_folder, budget, seed, **train_kwargs)
+            else:
+                raise ValueError("Invalid model name")
+        
+        elif dataset == "SVHN":
             data = SVHN.load()
-            eval_flipped_model(dataset, modeltype, data, get_VGG16_SVHN, model_folder, budget, seed, **train_kwargs)
-        if dataset == "GTSRB":
-            data = GTSRB.load()
-            eval_flipped_model(dataset, modeltype, data, get_VGG16_GTSRB, model_folder, budget, seed, **train_kwargs)
-        if dataset == "Cifar100":
-            data = Cifar100.load()
-            eval_flipped_model(dataset, modeltype, data, get_VGG16_CIFAR100, model_folder, budget, seed, **train_kwargs)
+            if modelname == "VGG16":
+                eval_flipped_model(dataset, modelname, data, get_VGG16_SVHN, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "RESNET50":
+                eval_flipped_model(dataset, modelname, data, get_RESNET50_SVHN, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "classifier_VGG16":
+                eval_flipped_model(dataset, modelname, data, classifier_VGG16, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "classifier_RESNET50":
+                eval_flipped_model(dataset, modelname, data, classifier_RESNET50, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "extractfeatures_VGG16":
+                eval_flipped_model(dataset, modelname, data, extractfeatures_VGG16, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "extractfeatures_RESNET50":
+                eval_flipped_model(dataset, modelname, data, extractfeatures_VGG16, model_folder, budget, seed, **train_kwargs)
+            else:
+                raise ValueError("Invalid model name")
+        else:
+            raise ValueError("Invalid dataset name")            
 
-
-
-def eval_flipped_model(dataset, modeltype, data, model_init, model_folder, budget, seed=42, **train_kwargs):
+def eval_flipped_model(dataset, modelname, data, model_init, model_folder, budget, seed=42, **train_kwargs):
     os.makedirs(model_folder, exist_ok=True)
     result = LabelFlipResult(model_folder)
 
@@ -136,14 +185,14 @@ def eval_flipped_model(dataset, modeltype, data, model_init, model_folder, budge
     y_train_orig = y_train.copy()
     y_train, _ = flip_labels(y_train, create_rand_offset(y_train, seed), budget, seed)
 
-    weight_path = os.path.join(model_folder, dataset +"_"+modeltype+"_"+'_best_model.hdf5')
+    weight_path = os.path.join(model_folder, dataset +"_"+modelname+"_"+'_best_model.hdf5')
     if not os.path.exists(weight_path):
         train(model_init, model_folder, data, **train_kwargs)
         save_train_results(model_folder)
     flipped_model = model_init(weight_path=weight_path)
 
     retrain_folder = os.path.join(model_folder, 'retraining')
-    retrain_weights = os.path.join(retrain_folder,  dataset+"_"+modeltype+'best_model.hdf5')
+    retrain_weights = os.path.join(retrain_folder,  dataset+"_"+modelname+'best_model.hdf5')
     os.makedirs(retrain_folder, exist_ok=True)
     y_train = y_train_orig
     train(model_init, retrain_folder, data, **train_kwargs)

@@ -7,7 +7,7 @@ from tensorflow.keras.backend import clear_session
 
 from Applications.Poisoning.unlearn.common import evaluate_model_diff
 from Applications.Poisoning.configs.config import Config
-from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100
+from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100, extractfeatures_VGG16, extractfeatures_RESNET50, classifier_VGG16, classifier_RESNET50, get_RESNET50_CIFAR10, get_RESNET50_MNIST, get_RESNET50_FASHION, get_RESNET50_SVHN, get_RESNET50_GTSRB, get_RESNET50_CIFAR100
 from Applications.Poisoning.poison.injector import LabelflipInjector
 from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, GTSRB, Cifar100
 from util import UnlearningResult, reduce_dataset, measure_time
@@ -19,31 +19,92 @@ def get_parser():
     return parser
 
 
-def run_experiment(dataset, modeltype, model_folder, train_kwargs, poison_kwargs, unlearn_kwargs):
+def run_experiment(dataset, modelname, model_folder, train_kwargs, poison_kwargs, unlearn_kwargs):
     if dataset == "Cifar10":
         data = Cifar10.load()
-        model_init = lambda: get_VGG16_CIFAR10(dense_units=train_kwargs['model_size'])
-
+        if modelname == "RESNET50":
+            model_init = lambda: get_RESNET50_CIFAR10(dense_units=train_kwargs['model_size'])
+        elif modelname == "VGG16":
+            model_init = lambda: get_VGG16_CIFAR10(dense_units=train_kwargs['model_size'])
+        elif modelname == "extractfeatures_VGG16":
+            model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'])
+        elif modelname == "extractfeatures_RESNET50":
+            model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'])
+        elif modelname == "classifier_VGG16":
+            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'])
+        elif modelname == "classifier_RESNET50":
+            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'])
+        else:
+            raise ValueError(f"Unknown modelname: {modelname}")
+            
     if dataset == "Mnist":
         data = Mnist.load()
-        model = lambda: get_VGG16_MNIST(dense_units=train_kwargs['model_size'])
-    
+        if modelname == "RESNET50":
+            model_init = lambda: get_RESNET50_MNIST(dense_units=train_kwargs['model_size'])
+        elif modelname == "VGG16":
+            model_init = lambda: get_VGG16_MNIST(dense_units=train_kwargs['model_size'])
+        elif modelname == "extractfeatures_VGG16":
+            model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'])
+        elif modelname == "extractfeatures_RESNET50":
+            model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'])
+        elif modelname == "classifier_VGG16":
+            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'])
+        elif modelname == "classifier_RESNET50":
+            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'])
+        else:
+            raise ValueError(f"Unknown modelname: {modelname}")
+        
     if dataset == "FashionMnist":
         data = FashionMnist.load()
-        model = lambda: get_VGG16_FASHION(dense_units=train_kwargs['model_size'])
-    
+        if modelname == "RESNET50":
+            model_init = lambda: get_RESNET50_FASHION(dense_units=train_kwargs['model_size'])
+        elif modelname == "VGG16":
+            model_init = lambda: get_VGG16_FASHION(dense_units=train_kwargs['model_size'])
+        elif modelname == "extractfeatures_VGG16":
+            model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'])
+        elif modelname == "extractfeatures_RESNET50":
+            model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'])
+        elif modelname == "classifier_VGG16":
+            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'])
+        elif modelname == "classifier_RESNET50":
+            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'])
+        else:
+            raise ValueError(f"Unknown modelname: {modelname}")
+        
     if dataset == "SVHN":
         data = SVHN.load()
-        model = lambda: get_VGG16_SVHN(dense_units=train_kwargs['model_size'])
-
-    if dataset == "GTSRB":
-        data = GTSRB.load()
-        model = lambda: get_VGG16_GTSRB(dense_units=train_kwargs['model_size'])
+        if modelname == "VGG16":
+            model_init = lambda: get_VGG16_SVHN(dense_units=train_kwargs['model_size'])
+        elif modelname == "RESNET50":
+            model_init = lambda: get_RESNET50_SVHN(dense_units=train_kwargs['model_size'])
+        elif modelname == "extractfeatures_VGG16":
+            model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'])
+        elif modelname == "extractfeatures_RESNET50":
+            model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'])
+        elif modelname == "classifier_VGG16":
+            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'])
+        elif modelname == "classifier_RESNET50":
+            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'])
+        else:
+            raise ValueError(f"Unknown modelname: {modelname}")
     
     if dataset == "Cifar100":
         data = Cifar100.load()
-        model = lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
-
+        if modelname == "RESNET50":
+            model_init = lambda: get_RESNET50_CIFAR100(dense_units=train_kwargs['model_size'])
+        elif modelname == "VGG16":
+            model_init = lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
+        elif modelname == "extractfeatures_VGG16":
+            model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'])
+        elif modelname == "extractfeatures_RESNET50":
+            model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'])
+        elif modelname == "classifier_VGG16":
+            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'])
+        elif modelname == "classifier_RESNET50":
+            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'])
+        else:
+            raise ValueError(f"Unknown modelname: {modelname}")
+        
     
     (x_train, y_train), _, _ = data
     y_train_orig = y_train.copy()
@@ -57,13 +118,13 @@ def run_experiment(dataset, modeltype, model_folder, train_kwargs, poison_kwargs
     x_train, y_train = injector.inject(x_train, y_train)
     data = ((x_train, y_train), data[1], data[2])
 
-    poisoned_filename = dataset+"_"+modeltype+'_poisoned_model.hdf5'
-    repaired_filename = dataset+"_"+modeltype+'_repaired_model.hdf5'
-    eval_fine_tuning(dataset, modeltype, model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, injector.injected_idx, train_kwargs, unlearn_kwargs)
+    poisoned_filename = dataset+"_"+modelname+'_poisoned_model.hdf5'
+    repaired_filename = dataset+"_"+modelname+'_repaired_model.hdf5'
+    eval_fine_tuning(dataset, modelname, model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, injector.injected_idx, train_kwargs, unlearn_kwargs)
 
 
-def eval_fine_tuning(dataset, modeltype, model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, delta_idx, train_kwargs, unlearn_kwargs):
-    unlearning_result = UnlearningResult(model_folder, dataset, modeltype)
+def eval_fine_tuning(dataset, modelname, model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, delta_idx, train_kwargs, unlearn_kwargs):
+    unlearning_result = UnlearningResult(model_folder, dataset, modelname)
     poisoned_weights =  os.path.join(parent(model_folder), poisoned_filename)
 
     # prepare unlearning data
@@ -118,11 +179,11 @@ def fine_tuning(model_init, poisoned_weights, data, y_train_orig, clean_acc=1.0,
     return acc_before, acc_after, duration_s
 
 
-def main(model_folder, dataset, modeltype):
+def main(model_folder, dataset, modelname):
     poison_kwargs = Config.from_json(os.path.join(parent(model_folder), 'poison_config.json'))
     train_kwargs = Config.from_json(os.path.join(parent(model_folder), 'train_config.json'))
     unlearn_kwargs = Config.from_json(os.path.join(model_folder, 'unlearn_config.json'))
-    run_experiment(dataset, modeltype, model_folder, train_kwargs, poison_kwargs, unlearn_kwargs)
+    run_experiment(dataset, modelname, model_folder, train_kwargs, poison_kwargs, unlearn_kwargs)
 
 
 if __name__ == '__main__':
