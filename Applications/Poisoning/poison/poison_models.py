@@ -44,18 +44,18 @@ def train_poisoned(model_folder, poison_kwargs, train_kwargs, dataset='cifar10',
     elif dataset == 'Mnist':
         data = Mnist.load()
         if modelname == 'VGG16':
-            model_init = lambda: get_VGG16_MNIST(classes)
+            model_init = lambda: get_VGG16_MNIST(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
             print(f"Classes: {classes}, Modelname: {modelname}")
         elif modelname == 'RESNET50':
-            model_init = lambda: get_RESNET50_MNIST(classes)
+            model_init = lambda: get_RESNET50_MNIST(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
         elif modelname == 'extractfeatures_VGG16':
-            model_init = lambda: extractfeatures_VGG16(classes)
+            model_init = lambda: extractfeatures_VGG16(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
         elif modelname == 'extractfeatures_RESNET50':
-            model_init = lambda: extractfeatures_RESNET50(classes)
+            model_init = lambda: extractfeatures_RESNET50(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
         elif modelname == 'classifier_VGG16':
-            model_init = lambda: classifier_VGG16(classes)
+            model_init = lambda: classifier_VGG16(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
         elif modelname == 'classifier_RESNET50':
-            model_init = lambda: classifier_RESNET50(classes)
+            model_init = lambda: classifier_RESNET50(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
         else:
             raise ValueError(f"Unknown modelname: {modelname}")
         
@@ -63,67 +63,67 @@ def train_poisoned(model_folder, poison_kwargs, train_kwargs, dataset='cifar10',
     elif dataset == 'FashionMnist':
         data = FashionMnist.load()
         if modelname == 'VGG16':
-            model_init = lambda: get_VGG16_FASHION(classes)
+            model_init = lambda: get_VGG16_FASHION(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'RESNET50':
-            model_init = lambda: get_RESNET50_FASHION(classes)
+            model_init = lambda: get_RESNET50_FASHION(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'extractfeatures_VGG16':
-            model_init = lambda: extractfeatures_VGG16(classes)
+            model_init = lambda: extractfeatures_VGG16(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'extractfeatures_RESNET50':
-            model_init = lambda: extractfeatures_RESNET50(classes)
+            model_init = lambda: extractfeatures_RESNET50(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'classifier_VGG16':
-            model_init = lambda: classifier_VGG16(classes)
+            model_init = lambda: classifier_VGG16(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'classifier_RESNET50':
-            model_init = lambda: classifier_RESNET50(classes)
+            model_init = lambda: classifier_RESNET50(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         else:
             raise ValueError(f"Unknown modelname: {modelname}")
     elif dataset == 'SVHN':
         data = SVHN.load()
         if modelname == 'VGG16':
-            model_init = lambda: get_VGG16_SVHN(classes)
+            model_init = lambda: get_VGG16_SVHN(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'RESNET50':
-            model_init = lambda: get_RESNET50_SVHN(classes)
+            model_init = lambda: get_RESNET50_SVHN(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'extractfeatures_VGG16':
-            model_init = lambda: extractfeatures_VGG16(classes)
+            model_init = lambda: extractfeatures_VGG16(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'extractfeatures_RESNET50':
-            model_init = lambda: extractfeatures_RESNET50(classes)
+            model_init = lambda: extractfeatures_RESNET50(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'classifier_VGG16':
-            model_init = lambda: classifier_VGG16(classes)
+            model_init = lambda: classifier_VGG16(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'classifier_RESNET50':
-            model_init = lambda: classifier_RESNET50(classes)
+            model_init = lambda: classifier_RESNET50(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         else:
             raise ValueError(f"Unknown modelname: {modelname}")
         
     elif dataset == 'FashionMnist':
         data = FashionMnist.load()
         if modelname == 'VGG16':
-            model_init = lambda: get_VGG16_FASHION(classes)
+            model_init = lambda: get_VGG16_FASHION(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
         elif modelname == 'RESNET50':
-            model_init = lambda: get_RESNET50_FASHION(classes)
+            model_init = lambda: get_RESNET50_FASHION(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
         elif modelname == 'extractfeatures_VGG16':
-            model_init = lambda: extractfeatures_VGG16(classes)
+            model_init = lambda: extractfeatures_VGG16(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
         elif modelname == 'extractfeatures_RESNET50':
-            model_init = lambda: extractfeatures_RESNET50(classes)
+            model_init = lambda: extractfeatures_RESNET50(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
         elif modelname == 'classifier_VGG16':
-            model_init = lambda: classifier_VGG16(classes)
+            model_init = lambda: classifier_VGG16(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
         elif modelname == 'classifier_RESNET50':
-            model_init = lambda: classifier_RESNET50(classes)
+            model_init = lambda: classifier_RESNET50(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
         else:
             raise ValueError(f"Unknown modelname: {modelname}")
         
     elif dataset == 'Cifar100':
         data = Cifar100.load()
         if modelname == 'VGG16':
-            model_init = lambda: get_VGG16_CIFAR100(classes)
+            model_init = lambda: get_VGG16_CIFAR100(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'RESNET50':
-            model_init = lambda: get_RESNET50_CIFAR100(classes)
+            model_init = lambda: get_RESNET50_CIFAR100(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'extractfeatures_VGG16':
-            model_init = lambda: extractfeatures_VGG16(classes)
+            model_init = lambda: extractfeatures_VGG16(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'extractfeatures_RESNET50':
-            model_init = lambda: extractfeatures_RESNET50(classes)
+            model_init = lambda: extractfeatures_RESNET50(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'classifier_VGG16':
-            model_init = lambda: classifier_VGG16(classes)
+            model_init = lambda: classifier_VGG16(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'classifier_RESNET50':
-            model_init = lambda: classifier_RESNET50(classes)
+            model_init = lambda: classifier_RESNET50(classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         else:
             raise ValueError(f"Unknown modelname: {modelname}")
         
