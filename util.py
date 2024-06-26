@@ -21,7 +21,7 @@ class Result(object):
         self.dataset = dataset
         self.modeltype = modeltype
         filename = f"{dataset}_{modeltype}_{name_tmpl}"
-        
+        print(f"filename: {filename}")
         if len(suffix_kwargs) > 0:
             # assemble name to `base_name{-k0_v0-k1_v1}.json`
             suffix = '-'.join([f'{k}_{suffix_kwargs[k]}' for k in sorted(suffix_kwargs)])
