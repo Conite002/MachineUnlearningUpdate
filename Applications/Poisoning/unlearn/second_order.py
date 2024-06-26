@@ -175,7 +175,6 @@ def main(model_folder, config_file, verbose, dataset='Cifar10', modelname="VGG16
     poison_kwargs = Config.from_json(os.path.join(parent(model_folder), 'poison_config.json'))
     run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, dataset=dataset, modelname=modelname)
 
-
 if __name__ == '__main__':
     args = get_parser().parse_args()
     main(**vars(args))
