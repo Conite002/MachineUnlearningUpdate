@@ -30,17 +30,25 @@ class Result(object):
         else:
             filename = name_tmpl.format('')
         self.filepath = os.path.join(base_path, filename)
+        print(f"Result will be saved to: {self.filepath}")
+
 
     def save(self):
         """ Save object attributes except those used for opening the file etc. """
+        
+        print(f"Saving results to: {self.filepath}")
         with open(self.filepath, 'w') as f:
             json.dump(self.as_dict(), f, indent=4)
+        print(f"Results saved to: {self.filepath}")
         return self
 
     def load(self):
         """ Load object attributes from given file path. """
+        print(f"Loading results from: {self.filepath}")
         with open(self.filepath, 'r') as f:
             self.update(json.load(f))
+        
+        print(f"Results loaded from: {self.filepath}")
         return self
 
     def as_dict(self):
