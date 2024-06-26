@@ -20,13 +20,15 @@ class Result(object):
     def __init__(self, base_path, name_tmpl, dataset, modeltype, **suffix_kwargs):
         self.dataset = dataset
         self.modeltype = modeltype
-        filename = dataset + '_' + '_' + modeltype + '_' + name_tmpl
+        filename = f"{dataset}_{modeltype}_{name_tmpl}"
+        
         if len(suffix_kwargs) > 0:
             # assemble name to `base_name{-k0_v0-k1_v1}.json`
             suffix = '-'.join([f'{k}_{suffix_kwargs[k]}' for k in sorted(suffix_kwargs)])
             if len(suffix) > 0:
                 suffix = f'-{suffix}'
                 filename = name_tmpl.format(suffix)
+
         else:
             filename = name_tmpl.format('')
         self.filepath = os.path.join(base_path, filename)
