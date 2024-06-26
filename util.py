@@ -25,12 +25,16 @@ class Result(object):
         if len(suffix_kwargs) > 0:
             # assemble name to `base_name{-k0_v0-k1_v1}.json`
             suffix = '-'.join([f'{k}_{suffix_kwargs[k]}' for k in sorted(suffix_kwargs)])
+            filename = f"{dataset}_{modeltype}_{name_tmpl.format(suffix)}"
+
             if len(suffix) > 0:
                 suffix = f'-{suffix}'
-                filename = name_tmpl.format(suffix)
+                #filename = name_tmpl.format(suffix)
+                filename = f"{dataset}_{modeltype}_{name_tmpl.format(suffix)}"
 
         else:
-            filename = name_tmpl.format('')
+            filename = f"{dataset}_{modeltype}_{name_tmpl.format('')}"
+            #filename = name_tmpl.format('')
         self.filepath = os.path.join(base_path, filename)
         print(f"Result will be saved to: {self.filepath}")
 
