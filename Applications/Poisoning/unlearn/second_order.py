@@ -130,12 +130,12 @@ def run_experiment(dataset, modelname, model_folder, train_kwargs, poison_kwargs
 
     poisoned_filename = dataset+"_"+modelname+'_poisoned_model.hdf5'
     repaired_filename = dataset+"_"+modelname+'_repaired_model.hdf5'
-    second_order_unlearning(dataset, modelname, model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig,
-                            injector.injected_idx, unlearn_kwargs, verbose=verbose)
+    second_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig,
+                            injector.injected_idx, unlearn_kwargs, verbose=verbose, dataset=dataset, modelname=modelname)
 
 
-def second_order_unlearning(dataset, modelname, model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, delta_idx,
-                            unlearn_kwargs, order=2, verbose=False):
+def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, delta_idx,
+                            unlearn_kwargs, order=2, verbose=False, dataset='Cifar10', modelname="VGG16"):
     unlearning_result = UnlearningResult(model_folder, dataset, modelname)
     poisoned_weights = os.path.join(parent(model_folder), poisoned_filename)
     log_dir = model_folder

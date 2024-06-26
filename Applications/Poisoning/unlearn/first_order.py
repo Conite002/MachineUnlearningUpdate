@@ -21,7 +21,7 @@ def get_parser():
     return parser
 
 
-def run_experiment(dataset, modelname, model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, reduction=1.0, verbose=False):
+def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, reduction=1.0, verbose=False, dataset='Cifar10', modelname="VGG16"):
     if dataset == "Cifar10":
         data = Cifar10.load()
         if modelname == "RESNET50":
@@ -170,7 +170,7 @@ def main(model_folder, config_file, verbose, dataset='Cifar10', modelname="VGG16
     train_kwargs = Config.from_json(os.path.join(parent(model_folder), 'train_config.json'))
     unlearn_kwargs = Config.from_json(config_file)
     poison_kwargs = Config.from_json(os.path.join(parent(model_folder), 'poison_config.json'))
-    run_experiment(dataset, modelname, model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose)
+    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, dataset=dataset, modelname=modelname)
 
 
 if __name__ == '__main__':
