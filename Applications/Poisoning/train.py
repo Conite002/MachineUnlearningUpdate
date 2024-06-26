@@ -35,6 +35,19 @@ def train(dataset, modelname, model_init, model_folder, data, epochs, batch_size
     os.makedirs(model_folder, exist_ok=True)
     model_save_path = os.path.join(model_folder, model_filename)
     if os.path.exists(model_save_path):
+        result = TrainingResult(model_folder, dataset, modelname)
+        (x_train, y_train), (x_test, y_test), (x_val, y_val) = data
+        model = model_init()
+        model.load_weights(model_save_path)
+        # calculate test metrics on final model
+        y_test_hat = np.argmax(model.predict(x_test), axis=1)
+        test_loss = model.evaluate(x_test, y_test, batch_size=1000, verbose=0)[0]
+        report = classification_report(np.argmax(y_test, axis=1), y_test_hat, digits=4, output_dict=True)
+        report['test_loss'] = test_loss
+        result.update(report)
+        result.save()
+        
+
         return model_save_path
     
 
