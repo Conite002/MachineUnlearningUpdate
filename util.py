@@ -17,7 +17,7 @@ from tensorflow import GradientTape
 class Result(object):
     """ Python dict with save/load functionality. """
 
-    def __init__(self, base_path, name_tmpl, dataset, modeltype, **suffix_kwargs):
+    def __init__(self, base_path, dataset, modeltype, name_tmpl, **suffix_kwargs):
         self.dataset = dataset
         self.modeltype = modeltype
         if len(suffix_kwargs) > 0:
@@ -70,20 +70,19 @@ class Result(object):
     def exists(self):
         return os.path.exists(self.filepath)
 
-
 class TrainingResult(Result):
-    def __init__(self, model_folder,dataset, modeltype, name_tmpl='train_results{}.json', **suffix_kwargs):
+    def __init__(self, model_folder, dataset, modeltype, name_tmpl='train_results{}.json', **suffix_kwargs):
         super().__init__(model_folder, dataset, modeltype, name_tmpl, **suffix_kwargs)
 
 
 class PoisoningResult(Result):
     def __init__(self, model_folder, dataset, modeltype, name_tmpl='poisoning_results{}.json', **suffix_kwargs):
-        super().__init__(model_folder, name_tmpl, dataset, modeltype, **suffix_kwargs)
+        super().__init__(model_folder, dataset, modeltype, name_tmpl, **suffix_kwargs)
 
 
 class LabelFlipResult(Result):
     def __init__(self, model_folder, dataset, modeltype, name_tmpl='labelflip_results{}.json', **suffix_kwargs):
-        super().__init__(model_folder, name_tmpl, dataset, modeltype, **suffix_kwargs)
+        super().__init__(model_folder, dataset, modeltype, name_tmpl, **suffix_kwargs)
 
 
 class UnlearningResult(Result):
@@ -102,8 +101,8 @@ class SGDUnlearningResult(Result):
 
 
 class ActivationClusteringResult(Result):
-    def __init__(self, model_folder,dataset, modeltype, name_tmpl='activation_clustering_results{}.json', **suffix_kwargs):
-        super().__init__(model_folder,dataset, modeltype, name_tmpl, **suffix_kwargs)
+    def __init__(self, model_folder, dataset, modeltype, name_tmpl='activation_clustering_results{}.json', **suffix_kwargs):
+        super().__init__(model_folder, dataset, modeltype, name_tmpl, **suffix_kwargs)
 
 
 class MixedResult(Result):
