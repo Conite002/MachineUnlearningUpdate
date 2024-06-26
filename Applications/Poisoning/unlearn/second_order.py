@@ -140,6 +140,10 @@ def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, 
     poisoned_weights = os.path.join(parent(model_folder), poisoned_filename)
     log_dir = model_folder
 
+    # Check if unlearning has already been performed
+    if unlearning_result.exists():
+        print(f"Unlearning results already exist for {model_folder}")
+        return
     # start unlearning hyperparameter search for the poisoned model
     with open(model_folder.parents[2]/'clean'/'train_results.json', 'r') as f:
         clean_acc = json.load(f)['accuracy']
