@@ -22,6 +22,8 @@ def train_poisoned(model_folder, poison_kwargs, train_kwargs, dataset='cifar10',
     data = None
     model_init = None
 
+    if dataset == 'Cifar100':
+        classes = 100
 
 
     if dataset == 'Cifar10':
@@ -113,17 +115,17 @@ def train_poisoned(model_folder, poison_kwargs, train_kwargs, dataset='cifar10',
     elif dataset == 'Cifar100':
         data = Cifar100.load()
         if modelname == 'VGG16':
-            model_init = lambda: get_VGG16_CIFAR100(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
+            model_init = lambda: get_VGG16_CIFAR100(num_classes=100, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'RESNET50':
-            model_init = lambda: get_RESNET50_CIFAR100(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
+            model_init = lambda: get_RESNET50_CIFAR100(num_classes=100, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'extractfeatures_VGG16':
-            model_init = lambda: extractfeatures_VGG16(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
+            model_init = lambda: extractfeatures_VGG16(num_classes=100, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'extractfeatures_RESNET50':
-            model_init = lambda: extractfeatures_RESNET50(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
+            model_init = lambda: extractfeatures_RESNET50(num_classes=100, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'classifier_VGG16':
-            model_init = lambda: classifier_VGG16(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
+            model_init = lambda: classifier_VGG16(num_classes=100, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         elif modelname == 'classifier_RESNET50':
-            model_init = lambda: classifier_RESNET50(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
+            model_init = lambda: classifier_RESNET50(num_classes=100, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
         else:
             raise ValueError(f"Unknown modelname: {modelname}")
         
