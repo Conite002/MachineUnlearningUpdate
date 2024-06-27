@@ -141,7 +141,7 @@ def first_order_unlearning(dataset, modelname, model_folder, poisoned_filename, 
     log_dir = model_folder
 
     # check if unlearning has already been performed
-    if unlearning_result.exists():
+    if unlearning_result.exists:
         print(f"Unlearning results already exist for {model_folder}")
         return
     

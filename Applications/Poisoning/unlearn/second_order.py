@@ -141,7 +141,7 @@ def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, 
     log_dir = model_folder
 
     # Check if unlearning has already been performed
-    if unlearning_result.exists():
+    if unlearning_result.exists:
         print(f"Unlearning results already exist for {model_folder}")
         return
     # start unlearning hyperparameter search for the poisoned model
