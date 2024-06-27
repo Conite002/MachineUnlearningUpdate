@@ -20,7 +20,7 @@ def get_parser():
     return parser
 
 
-def run_experiment(dataset, modelname, model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, reduction=1.0, verbose=False, classes=10):
+def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, reduction=1.0, verbose=False, classes=10, dataset='Cifar10', modelname="VGG16"):
     if dataset == "Cifar10":
         data = Cifar10.load()
         if modelname == "RESNET50":

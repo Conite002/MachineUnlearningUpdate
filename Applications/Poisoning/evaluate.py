@@ -128,7 +128,8 @@ def evaluate(model_folder, dataset, modelname, type):
     model_folder = Path(model_folder)
     weights_folder = model_folder / f"{dataset}_{modelname}_{type}_model.hdf5"
     if are_weights_loaded(model, weights_folder):
-        print("Model weights loaded successfully.")
+
+        print(f"Model weights loaded successfully from {weights_folder}.")
     else:
         print("Failed to load model weights.")
 
