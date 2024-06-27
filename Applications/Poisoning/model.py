@@ -110,14 +110,14 @@ def VGG16Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=Fals
     
     
     # Block 1
-    model = Conv2D(filters=64, kernel_size=3, padding='same')(input_layer)
+    model = Conv2D(filters=128, kernel_size=3, padding='same')(input_layer)
     model = BatchNormalization()(model)
     model = LeakyReLU()(model)
-    model = Conv2D(filters=64, kernel_size=3, padding='same')(model)
+    model = Conv2D(filters=128, kernel_size=3, padding='same')(model)
     model = BatchNormalization()(model)
-    model = LeakyReLU()(model)
-    model = MaxPool2D(pool_size=2)(model)
-    model = Dropout(0.3)(model)
+    # model = LeakyReLU()(model)
+    model = MaxPool2D(pool_size=((2, 2)))(model)
+    model = Dropout(0.1)(model)
     
     # Block 2
     model = Conv2D(filters=128, kernel_size=3, padding='same')(model)
@@ -125,9 +125,9 @@ def VGG16Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=Fals
     model = LeakyReLU()(model)
     model = Conv2D(filters=128, kernel_size=3, padding='same')(model)
     model = BatchNormalization()(model)
-    model = LeakyReLU()(model)
-    model = MaxPool2D(pool_size=2)(model)
-    model = Dropout(0.4)(model)
+    # model = LeakyReLU()(model)
+    model = MaxPool2D(pool_size=(2,2))(model)
+    model = Dropout(0.1)(model)
     
     # Block 3
     model = Conv2D(filters=256, kernel_size=3, padding='same')(model)
@@ -138,13 +138,13 @@ def VGG16Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=Fals
     model = LeakyReLU()(model)
     model = Conv2D(filters=256, kernel_size=3, padding='same')(model)
     model = BatchNormalization()(model)
-    model = LeakyReLU()(model)
-    model = MaxPool2D(pool_size=2)(model)
-    model = Dropout(0.4)(model)
+    # model = LeakyReLU()(model)
+    model = MaxPool2D(pool_size=(2, 2))(model)
+    model = Dropout(0.2)(model)
     
     # Fully Connected Layers
     model = Flatten()(model)
-    model = Dense(units=4096)(model)
+    model = Dense(units=4096, kernel_initializer='he_uniform')(model)
     model = BatchNormalization()(model)
     model = ReLU()(model)
     model = Dropout(0.5)(model)
