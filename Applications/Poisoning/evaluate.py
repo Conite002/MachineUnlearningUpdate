@@ -109,15 +109,15 @@ def evaluate(model_folder, dataset, modelname, type):
         if modelname == "VGG16":
             model = get_VGG16_CIFAR100()
         elif modelname == "RESNET50":
-            model = get_RESNET50_CIFAR100()
+            model = get_RESNET50_CIFAR100( )
         elif modelname == "extractfeatures_VGG16":
-            model = extractfeatures_VGG16()
+            model = extractfeatures_VGG16(num_classes=100)
         elif modelname == "extractfeatures_RESNET50":
-            model = extractfeatures_RESNET50()
+            model = extractfeatures_RESNET50(num_classes=100)
         elif modelname == "classifier_VGG16":
-            model = classifier_VGG16()
+            model = classifier_VGG16(num_classes=100)
         elif modelname == "classifier_RESNET50":
-            model = classifier_RESNET50()
+            model = classifier_RESNET50(num_classes=100)
 
 
     else:
