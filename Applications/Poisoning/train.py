@@ -223,19 +223,19 @@ def main(model_folder, dataset="Cifar10", modelname="RESNET50", classes=10):
         data = Cifar100.load()
         classes = 100
         if modelname == "RESNET50":
-            model_init = lambda: get_RESNET50_CIFAR100(dense_units=train_kwargs['model_size'], classes=classes)
+            model_init = lambda: get_RESNET50_CIFAR100(dense_units=train_kwargs['model_size'], num_classes=classes)
         elif modelname == "VGG16":
-            model_init = lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size'], classes=classes)
+            model_init = lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size'], num_classes=classes)
         elif modelname == "extractfeatures_VGG16":
-            model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'], classes=classes)
+            model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'], num_classes=classes)
         elif modelname == "extractfeatures_RESNET50":
-            model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'], classes=classes)
+            model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'], num_classes=classes)
         elif modelname == "classifier_VGG16":
-            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'], classes=classes)
+            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'], num_classes=classes)
         elif modelname == "classifier_RESNET50":
-            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'], classes=classes)
+            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'], num_classes=classes)
         else:
-            model_init = lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size'], classes=classes)
+            model_init = lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size'], num_classes=classes)
 
     train(dataset, modelname, model_init, model_folder, data, **train_kwargs, model_filename=dataset  +"_"+modelname+ '_best_model.hdf5', classes=classes)
 
