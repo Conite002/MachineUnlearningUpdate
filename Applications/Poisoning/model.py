@@ -229,16 +229,25 @@ def extractfeatures_RESNET50(input_shape=(32, 32, 3), num_classes=10, dense_unit
     return feature_extractor
 
 def classifier_VGG16(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    base_model = VGG16(weights="imagenet", include_top=False)
+    base_model = VGG16(weights="imagenet", include_top=False, input_shape=input_shape)
+    
+    # Freeze the layers of VGG16
+    for layer in base_model.layers:
+        layer.trainable = False
+    
     inputs = Input(shape=input_shape, name='image_input')
-    x = base_model(inputs)
+    x = base_model(inputs, training=False) 
     x = Flatten()(x)
     x = Dense(4096, activation='relu')(x)
     x = Dropout(0.5)(x)
     outputs = Dense(num_classes, activation='softmax')(x)
     model = Model(inputs, outputs)
-    model.compile(optimizer='adam', loss=categorical_crossentropy, metrics=['accuracy'])
+    
+    optimizer = SGD(learning_rate=lr_init) if sgd else Adam(learning_rate=lr_init)
+    model.compile(optimizer=optimizer, loss=categorical_crossentropy, metrics=['accuracy'])
+    
     return model
+
 
 def classifier_VGG16_CIFAR100(input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
     return classifier_VGG16(input_shape, num_classes, dense_units, lr_init, sgd)

@@ -65,10 +65,11 @@ def flip_labels(Y, budget=200, seed=42, target=-1, verbose=False):
     targets = sources[::-1]
     idx_list = []
     Y_orig = Y.copy()
-    budget //= 10  # 10th of the budget for each pair
+    budget //= num_classes  # 10th of the budget for each pair
     for s, t in zip(sources, targets):
         _idx = idx[np.argwhere(np.argmax(Y_orig[idx], axis=1) == s)[:, 0]][:budget]
-        label = np.eye(10)[t].reshape(1, 10)
+        num_classes = Y.shape[1]
+        label = np.eye(num_classes)[t].reshape(1, num_classes)
         if verbose:
             print(f">> flipping {len(_idx)} labels from {s} to {t}")
         Y[_idx] = label
