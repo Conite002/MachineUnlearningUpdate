@@ -4,7 +4,7 @@ import json
 import argparse
 
 from Applications.Poisoning.configs.config import Config
-from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100, get_RESNET50_CIFAR100, get_RESNET50_CIFAR10, get_RESNET50_MNIST, get_RESNET50_FASHION, get_RESNET50_SVHN, get_RESNET50_GTSRB, extractfeatures_VGG16, extractfeatures_RESNET50, classifier_VGG16, classifier_RESNET50
+from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100, get_RESNET50_CIFAR100, get_RESNET50_CIFAR10, get_RESNET50_MNIST, get_RESNET50_FASHION, get_RESNET50_SVHN, get_RESNET50_GTSRB, extractfeatures_VGG16, extractfeatures_RESNET50, classifier_VGG16, classifier_RESNET50, classifier_VGG16_CIFAR100, classifier_RESNET50_CIFAR100, extractfeatures_RESNET50_CIFAR100, extractfeatures_VGG16_CIFAR100
 from Applications.Poisoning.poison.injector import LabelflipInjector
 from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, GTSRB, Cifar100
 from Applications.Poisoning.unlearn.common import evaluate_unlearning
@@ -96,13 +96,13 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
         elif modelname == "VGG16":
             model_init = lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
         elif modelname == "extractfeatures_VGG16":
-            model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'])
+            model_init = lambda: extractfeatures_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
         elif modelname == "extractfeatures_RESNET50":
-            model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'])
+            model_init = lambda: extractfeatures_RESNET50_CIFAR100(dense_units=train_kwargs['model_size'])
         elif modelname == "classifier_VGG16":
-            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'])
+            model_init = lambda: classifier_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
         elif modelname == "classifier_RESNET50":
-            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'])
+            model_init = lambda: classifier_RESNET50_CIFAR100(dense_units=train_kwargs['model_size'])
         else:
             raise ValueError(f"Unknown modelname: {modelname}")
         
