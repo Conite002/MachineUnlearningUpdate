@@ -152,7 +152,7 @@ def train_poisoned(model_folder, poison_kwargs, train_kwargs, dataset='cifar10',
         n_shards = Config.from_json(os.path.join(model_folder, 'unlearn_config.json'))['n_shards']
         train_models(model_init, model_folder, data, n_shards, model_filename=dataset+"_"+modelname+'_poisoned_model.hdf5', **train_kwargs)
     else:
-        train(dataset, modelname,model_init, model_folder, data, model_filename=dataset+"_"+modelname+'_poisoned_model.hdf5', **train_kwargs)
+        train(dataset, modelname,model_init, model_folder, data, model_filename=dataset+"_"+modelname+'_poisoned_model.hdf5',  classes=classes, **train_kwargs)
 
 
 def main(model_folder, config_file, dataset='cifar10', modelname='VGG16', classes=10):
