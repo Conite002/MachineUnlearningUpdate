@@ -240,6 +240,18 @@ def classifier_VGG16(input_shape=(32, 32, 3), num_classes=10, dense_units=512, l
     model.compile(optimizer='adam', loss=categorical_crossentropy, metrics=['accuracy'])
     return model
 
+def classifier_VGG16_CIFAR100(input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
+    return classifier_VGG16(input_shape, num_classes, dense_units, lr_init, sgd)
+
+def classifier_RESNET50_CIFAR100(input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
+    return classifier_RESNET50(input_shape, num_classes, dense_units, lr_init, sgd)
+
+def extractfeatures_VGG16_CIFAR100(input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
+    return extractfeatures_VGG16(input_shape, num_classes, dense_units, lr_init, sgd)
+
+def extractfeatures_RESNET50_CIFAR100(input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):   
+    return extractfeatures_RESNET50(input_shape, num_classes, dense_units, lr_init, sgd)
+
 def classifier_RESNET50(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
     base_model = ResNet50(weights="imagenet", include_top=False)
     inputs = Input(shape=input_shape, name='image_input')

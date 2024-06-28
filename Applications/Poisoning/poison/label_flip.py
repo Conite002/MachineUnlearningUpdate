@@ -5,7 +5,8 @@ import numpy as np
 from tensorflow.keras.losses import categorical_crossentropy
 
 from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, GTSRB, Cifar100
-from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100, extractfeatures_RESNET50, get_RESNET50_CIFAR10, get_RESNET50_CIFAR100, get_RESNET50_SVHN, get_RESNET50_MNIST, get_RESNET50_FASHION, classifier_VGG16, classifier_RESNET50, extractfeatures_VGG16
+from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100, extractfeatures_RESNET50, get_RESNET50_CIFAR10
+from Applications.Poisoning.model import get_RESNET50_CIFAR100, get_RESNET50_SVHN, get_RESNET50_MNIST, get_RESNET50_FASHION, classifier_VGG16, classifier_RESNET50, extractfeatures_VGG16, classifier_VGG16_CIFAR100, classifier_RESNET50_CIFAR100, extractfeatures_VGG16_CIFAR100, extractfeatures_RESNET50_CIFAR100
 from Applications.Poisoning.train import train
 from util import UnlearningResult, MixedResult, GradientLoggingContext, LabelFlipResult, save_train_results
 
@@ -170,6 +171,23 @@ def main(model_folder, budget, batch_size=64, lr_init=1e-4,
                 eval_flipped_model(dataset, modelname, data, extractfeatures_VGG16, model_folder, budget, seed, **train_kwargs)
             elif modelname == "extractfeatures_RESNET50":
                 eval_flipped_model(dataset, modelname, data, extractfeatures_VGG16, model_folder, budget, seed, **train_kwargs)
+            else:
+                raise ValueError("Invalid model name")
+            
+        elif dataset == "Cifar100":
+            data = Cifar100.load()
+            if modelname == "VGG16":
+                eval_flipped_model(dataset, modelname, data, get_VGG16_CIFAR100, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "RESNET50":
+                eval_flipped_model(dataset, modelname, data, get_RESNET50_CIFAR100, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "classifier_VGG16":
+                eval_flipped_model(dataset, modelname, data, classifier_VGG16_CIFAR100, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "classifier_RESNET50":
+                eval_flipped_model(dataset, modelname, data, classifier_RESNET50_CIFAR100, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "extractfeatures_VGG16":
+                eval_flipped_model(dataset, modelname, data, extractfeatures_VGG16_CIFAR100, model_folder, budget, seed, **train_kwargs)
+            elif modelname == "extractfeatures_RESNET50":
+                eval_flipped_model(dataset, modelname, data, extractfeatures_VGG16_CIFAR100, model_folder, budget, seed, **train_kwargs)
             else:
                 raise ValueError("Invalid model name")
         else:
