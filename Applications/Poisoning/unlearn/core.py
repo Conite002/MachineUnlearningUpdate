@@ -169,6 +169,10 @@ def approx_retraining(model, z_x, z_y, z_x_delta, z_y_delta, order=2, hvp_x=None
         update_pos = len(model.trainable_weights) - len(d_theta)
         theta_approx = [w - tau * d_theta.pop(0) if i >= update_pos else w for i,
                         w in enumerate(model.trainable_weights)]
+        print(f"Updated {len(theta_approx)} weights."
+                f" {len(model.trainable_weights) - len(theta_approx)} weights were not updated.")
+        # show if any non-trainable weights were updated
+        print(f"Updated non-trainable weights: {[(i, w.name) for i, w in enumerate(model.weights) if i >= update_pos]}")
         theta_approx = [theta_approx.pop(0) if w.trainable else w for w in model.weights]
         theta_approx = [w.numpy() for w in theta_approx]
         # theta_approx = [w - tau * d_t for w, d_t in zip(model.weights, d_theta)]
