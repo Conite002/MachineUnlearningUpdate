@@ -89,6 +89,7 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
         else:
             raise ValueError(f"Unknown modelname: {modelname}")
     
+    
     if dataset == "Cifar100":
         data = Cifar100.load()
         if modelname == "RESNET50":
