@@ -18,3 +18,5 @@ plot
 
 train_test_data/**/*.npy
 .data/
+
+train_test_data/
