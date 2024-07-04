@@ -20,13 +20,18 @@ class RNNUNlearner(DNNUnlearner):
     def __init__(self, x_train, y_train, embedding_dim, idx2char, lambda_=0.01, weight_path=None, canary_start=None,
                  canary_number=None, canary_repetitions=None, n_layers=1, n_units=256, p_dropout=0.0):
         tf.random.set_seed(42)
+
+        print(f"init RNNUnlearner with {x_train.shape[0]} samples")
         # training data
         self.x_train = x_train  # all x data is of shape (n_samples, max_len) and stored as unique indices
         self.y_train = y_train
         # test data makes no real sense in this setting so we use training data
+        print(f'x_train shape: {x_train.shape}, y_train shape: {y_train.shape}')
         self.x_test = x_train.copy()
         self.y_test = y_train.copy()
         self.idx2char = idx2char
+        print(f"Number of words in vocabulary: {len(idx2char)}")
+        print(f" idx2char: {idx2char}")
         self.char2idx = {v:k for k,v in self.idx2char.items()}
         self.n = self.x_train.shape[0]
         # model params
@@ -36,6 +41,8 @@ class RNNUNlearner(DNNUnlearner):
         self.lambda_ = lambda_
         self.n_units = n_units
         self.n_layers = n_layers
+        print(f"Number of words in vocabulary: {self.dim}")
+        print(f"n_units: {n_units}, n_layers: {n_layers}, p_dropout: {p_dropout}")
         self.model = self.get_network(weight_path=weight_path, no_lstm_units=n_units, n_layers=n_layers, p_dropout=p_dropout)
         # canary stuff
         self.canary_start = canary_start
@@ -44,7 +51,7 @@ class RNNUNlearner(DNNUnlearner):
         self.param_string = 'lambda={}-canary_number={}-canary_reps={}-embedding_dim={}-seqlen={}-dropout={}'.format(
             lambda_, canary_number, canary_repetitions, embedding_dim, x_train.shape[1], p_dropout)
 
-    def get_network(self, weight_path=None, optimizer='Adam', no_lstm_units=512, n_layers=2, p_dropout=0.0,
+    def get_network(self, weight_path=None, optimizer='Adam', no_lstm_units=512, n_layers=2, p_dropout=0.5,
                     learning_rate=0.0001):
         # define the LSTM model
         model = Sequential()
@@ -248,6 +255,7 @@ class RNNUNlearner(DNNUnlearner):
     def calc_sequence_perplexity(self, sequence, start_sequence=None):
         # code copied from CanaryCallback. Seems like there is no way to call it by hand (and get return value)
         number_char_indices = [self.char2idx[i] for i in sequence]
+        print('Number char indices: {}'.format(number_char_indices))
         start_seq = np.array([self.char2idx[s] for s in (self.canary_start if start_sequence is None else start_sequence)])
         start_seq = start_seq.reshape((1, len(start_seq), 1))
         digit_distribution = np.zeros(len(sequence))
