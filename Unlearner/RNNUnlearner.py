@@ -18,7 +18,7 @@ from scipy.stats import skewnorm
 
 class RNNUNlearner(DNNUnlearner):
     def __init__(self, x_train, y_train, embedding_dim, idx2char, lambda_=0.01, weight_path=None, canary_start=None,
-                 canary_number=None, canary_repetitions=None, n_layers=1, n_units=256, p_dropout=0.0):
+                 canary_number=None, canary_repetitions=None, n_layers=1, n_units=256, p_dropout=0.0, model=None):
         tf.random.set_seed(42)
 
         print(f"init RNNUnlearner with {x_train.shape[0]} samples")
@@ -43,7 +43,7 @@ class RNNUNlearner(DNNUnlearner):
         self.n_layers = n_layers
         print(f"Number of words in vocabulary: {self.dim}")
         print(f"n_units: {n_units}, n_layers: {n_layers}, p_dropout: {p_dropout}")
-        self.model = self.get_network(weight_path=weight_path, no_lstm_units=n_units, n_layers=n_layers, p_dropout=p_dropout)
+        #self.model = self.get_network(weight_path=weight_path, no_lstm_units=n_units, n_layers=n_layers, p_dropout=p_dropout)
         # canary stuff
         self.canary_start = canary_start
         self.canary_number = canary_number

@@ -17,6 +17,7 @@ CANARY_START = "`my telephone number is "
 
 # creates training examples and labels with random numbers to delete bias of the single number
 def get_z_delta(x_train_old, data_path, canary_no, seq_length, idx2char, n_repetitions, replace_char):
+    print(f" idx2char {idx2char}")
     card_no_length = len(canary_no)
     # if single char is given we simply repeat it
     if len(replace_char) == 1:
