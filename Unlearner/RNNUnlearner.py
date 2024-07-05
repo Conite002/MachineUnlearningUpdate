@@ -14,6 +14,7 @@ from Unlearner.DNNUnlearner import DNNUnlearner
 from Unlearner.CanaryCallback import CanaryCallback
 from sklearn.metrics import classification_report
 from scipy.stats import skewnorm
+from tensorflow.keras.models import load_model
 
 
 class RNNUNlearner(DNNUnlearner):
@@ -31,7 +32,6 @@ class RNNUNlearner(DNNUnlearner):
         self.y_test = y_train.copy()
         self.idx2char = idx2char
         print(f"Number of words in vocabulary: {len(idx2char)}")
-        print(f" idx2char: {idx2char}")
         self.char2idx = {v:k for k,v in self.idx2char.items()}
         self.n = self.x_train.shape[0]
         # model params
@@ -41,9 +41,7 @@ class RNNUNlearner(DNNUnlearner):
         self.lambda_ = lambda_
         self.n_units = n_units
         self.n_layers = n_layers
-        print(f"Number of words in vocabulary: {self.dim}")
-        print(f"n_units: {n_units}, n_layers: {n_layers}, p_dropout: {p_dropout}")
-        #self.model = self.get_network(weight_path=weight_path, no_lstm_units=n_units, n_layers=n_layers, p_dropout=p_dropout)
+        self.model = self.get_network(weight_path=weight_path, no_lstm_units=n_units, n_layers=n_layers, p_dropout=p_dropout)
         # canary stuff
         self.canary_start = canary_start
         self.canary_number = canary_number
@@ -162,7 +160,7 @@ class RNNUNlearner(DNNUnlearner):
         return data_cpy
 
     # generates the most likely string given a start_str
-    def generate_data(self, start_str=None, weights=None):
+    def generate_data(self, start_str=None, weights=None, modelpath=None):
         if start_str is None:
             # pick a random seed
             start = np.random.randint(0, self.n)
@@ -174,6 +172,9 @@ class RNNUNlearner(DNNUnlearner):
             model.set_weights(weights)
         else:
             model = self.model
+
+        if modelpath is not None:
+            model = load_model(modelpath)
         print("Seed:")
         print("\"", ''.join([self.idx2char[value] for value in pattern]), "\"")
         # generate characters
