@@ -47,7 +47,7 @@ def unlearn_canary(unlearner, data_path, seq_length, n_canaries, tau, order, bat
         print('Testing canary before unlearning step ...')
         pp_start, loss_start, acc_start, _ = unlearner.test_canary(reference_char=replace_char,
                                                                    chars_to_predict=chars_to_predict,
-                                                                   train_reduction=eval_reduction)
+                                                                   train_reduction=eval_reduction, weights=None, text_model=unlearner.model)
     else:
         pp_start, loss_start, acc_start = -1, -1, -1
     indices_to_change, x_delta, y_delta = get_z_delta(unlearner.x_train, data_path, unlearner.canary_number, seq_length,
@@ -127,12 +127,11 @@ def get_params_by_model_name(weight_path):
         param_str = filename.split('.ckpt')[0]
     splits_params = param_str.split(param_separator)
     splits_values = [s.split(value_separator) for s in splits_params]
-    print(f"Model parameters: {splits_values}")
+    # print(f"Model parameters: {splits_values}")
     lambda_ = float(splits_values[0][1])
-    print(f"Lambda: {lambda_}")
     canary_number = splits_values[1][1]
     canary_reps = int(splits_values[2][1])
-    print(f"Canary number: {canary_number}, Canary repetitions: {canary_reps}")
+
     embedding_dim = int(splits_values[3][1])
     seq_len = int(splits_values[4][1])
     p_dropout = float(splits_values[5][1]) if len(splits_values) > 5 else 0

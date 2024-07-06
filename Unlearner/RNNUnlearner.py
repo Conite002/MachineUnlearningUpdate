@@ -22,16 +22,13 @@ class RNNUNlearner(DNNUnlearner):
                  canary_number=None, canary_repetitions=None, n_layers=1, n_units=256, p_dropout=0.0, model=None):
         tf.random.set_seed(42)
 
-        print(f"init RNNUnlearner with {x_train.shape[0]} samples")
         # training data
         self.x_train = x_train  # all x data is of shape (n_samples, max_len) and stored as unique indices
         self.y_train = y_train
         # test data makes no real sense in this setting so we use training data
-        print(f'x_train shape: {x_train.shape}, y_train shape: {y_train.shape}')
         self.x_test = x_train.copy()
         self.y_test = y_train.copy()
         self.idx2char = idx2char
-        print(f"Number of words in vocabulary: {len(idx2char)}")
         self.char2idx = {v:k for k,v in self.idx2char.items()}
         self.n = self.x_train.shape[0]
         # model params
@@ -41,7 +38,10 @@ class RNNUNlearner(DNNUnlearner):
         self.lambda_ = lambda_
         self.n_units = n_units
         self.n_layers = n_layers
-        self.model = self.get_network(weight_path=weight_path, no_lstm_units=n_units, n_layers=n_layers, p_dropout=p_dropout)
+        if model is not None:
+            self.model = model
+        else:
+            self.model = self.get_network(weight_path=weight_path, no_lstm_units=n_units, n_layers=n_layers, p_dropout=p_dropout)
         # canary stuff
         self.canary_start = canary_start
         self.canary_number = canary_number
@@ -208,10 +208,15 @@ class RNNUNlearner(DNNUnlearner):
             pattern = pattern[1:len(pattern)]
         print("\nDone.")
 
-    def test_canary(self, reference_char, weights=None, chars_to_predict=40, train_reduction=None):
+    def test_canary(self, reference_char=None, weights=None, chars_to_predict=40, train_reduction=None, text_model=None):
         if weights is not None:
-            model = self.get_network(no_lstm_units=self.n_units, n_layers=self.n_layers)
+            # model = self.get_network(no_lstm_units=self.n_units, n_layers=self.n_layers)
+            model = self.model
             model.set_weights(weights)
+            
+        if text_model is not None:
+            print("Model loading ...")
+            model = text_model
         else:
             model = self.model
         train_selection = slice(0, train_reduction)  # on CPU it takes very long to classify entire dataset
