@@ -9,6 +9,10 @@ from Unlearner.DPLRUnlearner import DPLRUnlearner
 from Unlearner.DNNUnlearner import DNNUnlearner
 from Unlearner.EnsembleLR import LinearEnsemble
 from .LinearEnsembleExperiments import split_train_data, create_models
+from Unlearner.DPDTUnlearner import DPDTUnlearner
+from Unlearner.DPRFUnlearner import DPRFUnlearner
+from Unlearner.DPSVMUnlearner import DPSVMUnlearner
+from Unlearner.DPGBUnlearner import DPGBUnlearner
 #from DataLoader import DataLoader
 from tensorflow.keras.utils import to_categorical
 import numpy as np
@@ -78,123 +82,139 @@ def get_average_gradient_residual(train_data, test_data, voc, lambda_, sigma, in
     c = np.sqrt(2*np.log(1.5/delta))
     n_shards=20
     method_names = ['DP', 'Finetuning', '1st-Order', '2nd-Order']
-    unlearner = DPLRUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict)
-    unlearner.fit_model()
-    theta_dp = unlearner.theta
-    y_train = unlearner.y_train
-    results = np.zeros((len(method_names), n_combinations))
-    variable_size = combination_lengths if remove else n_replacements
-    with open(os.path.join(save_path, 'gradient_residual_results.csv'), 'w') as f:
-        print(','.join(['x']+method_names), file=f)
-    with open(os.path.join(save_path, 'fidelity_results.csv'), 'w') as f:
-        print(','.join(['x']+method_names+['Retraining', 'SISA']), file=f)
-    for vs in variable_size:
-        if remove:
-            param_str = f'grad_residual_lambda={lambda_}_sigma={sigma}_comb_len={vs}_ULR={unlearning_rate}'
-            feature_combinations = [list(np.random.choice(indices_to_delete, vs, replace=False)) for _
-                                    in
-                                    range(n_combinations)]
-        else:
-            param_str = f'grad_residual_lambda={lambda_}_sigma={sigma}_comb_len={combination_lengths[0]}_ULR={unlearning_rate}_replacements={vs}'
-            feature_combinations = [list(np.random.choice(indices_to_delete, combination_lengths[0], replace=False)) for _
-                                    in
-                                    range(n_combinations)]
-        res_dp, res_dummy, res_first, res_second, res_finetuned, res_retrain, res_sisa = [], [], [], [], [], [], []
-        print(f'\nSampling {len(feature_combinations)} combinations of {len(feature_combinations[0])} features ...')
-        for indices in tqdm(feature_combinations):
+
+    unlearners = {
+        'Logistic Regression': DPLRUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict),
+        'Decision Tree': DPDTUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict),
+        'Random Forest': DPRFUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict),
+        'SVM': DPSVMUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict),
+        'Gradient Boosting': DPGBUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict)
+    }
+
+    #unlearner = DPLRUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict)    
+    results = {method: {} for method in unlearners}  # Initialize results dict for each model
+
+    for method, unlearner in unlearners.items():
+        print(f"Evaluating {method}...")
+        unlearner.fit_model()
+        theta_dp = unlearner.theta
+        # Perform additional evaluation and logging as needed
+        results[method]['theta'] = theta_dp
+
+    for method, result in results.items():
+        with open(os.path.join(save_path, f'{method}_gradient_residual_results.csv'), 'w') as f:
+            print(','.join(['x'] + method_names), file=f)
+
+        theta_dp = result['theta']
+        y_train = unlearner.y_train
+        results[method] = np.zeros((len(method_names), n_combinations))
+        variable_size = combination_lengths if remove else n_replacements
+
+        for vs in variable_size:
             if remove:
-                x_delta, changed_rows = unlearner.copy_and_replace(unlearner.x_train, indices, remove,
-                                                                   n_replacements=n_replacements)
-                x_delta_test, _ = unlearner.copy_and_replace(unlearner.x_test, indices, remove, n_replacements=n_replacements)
+                param_str = f'grad_residual_lambda={lambda_}_sigma={sigma}_comb_len={vs}_ULR={unlearning_rate}'
+                feature_combinations = [list(np.random.choice(indices_to_delete, vs, replace=False)) for _ in range(n_combinations)]
             else:
-                x_delta, changed_rows = unlearner.copy_and_replace(unlearner.x_train, indices, remove,
-                                                                   n_replacements=vs)
-                x_delta_test = test_data[0]
-            z = (unlearner.x_train[changed_rows], unlearner.y_train[changed_rows])
-            z_delta = (x_delta[changed_rows], unlearner.y_train[changed_rows])
-            G = unlearner.get_G(z, z_delta)
+                param_str = f'grad_residual_lambda={lambda_}_sigma={sigma}_comb_len={combination_lengths[0]}_ULR={unlearning_rate}_replacements={vs}'
+                feature_combinations = [list(np.random.choice(indices_to_delete, combination_lengths[0], replace=False)) for _ in range(n_combinations)]
 
-            retrainer = DPLRUnlearner((x_delta, train_data[1]), (x_delta_test, test_data[1]), voc,  epsilon=1, delta=delta, sigma=0, lambda_=lambda_)
-            retrainer.fit_model()
-            theta_retrained = retrainer.theta
-            report = retrainer.get_performance(x_delta_test, test_data[1], theta_retrained)
-            res_retrain.append(report['accuracy'])
+            res_dp, res_finetuned, res_first, res_second, res_retrain, res_sisa = [], [], [], [], [], []
 
-            train_data_splits, data_indices = split_train_data(n_shards, train_data, indices_to_delete=None,
-                                                               remove=remove)
-            initial_models = create_models(lambda_, 0, train_data_splits, data_indices, test_data)
-            tmp_ensemble = LinearEnsemble(initial_models, n_classes=2)
-            tmp_ensemble.update_models(changed_rows)
-            tmp_ensemble.train_ensemble()
-            _, acc_ensemble = tmp_ensemble.evaluate(x_delta_test, test_data[1])
-            res_sisa.append(acc_ensemble)
+            print(f'\nSampling {len(feature_combinations)} combinations of {len(feature_combinations[0])} features ...')
+            for indices in tqdm(feature_combinations):
+                if remove:
+                    x_delta, changed_rows = unlearner.copy_and_replace(unlearner.x_train, indices, remove, n_replacements=n_replacements)
+                    x_delta_test, _ = unlearner.copy_and_replace(unlearner.x_test, indices, remove, n_replacements=n_replacements)
+                else:
+                    x_delta, changed_rows = unlearner.copy_and_replace(unlearner.x_train, indices, remove, n_replacements=vs)
+                    x_delta_test = test_data[0]
 
-            theta_first = unlearner.get_first_order_update(G, unlearning_rate)
-            theta_second = unlearner.get_second_order_update(x_delta, y_train, G)
-            theta_finetuned = unlearner.get_fine_tuning_update(x_delta, y_train, unlearning_rate_ft)
+                z = (unlearner.x_train[changed_rows], unlearner.y_train[changed_rows])
+                z_delta = (x_delta[changed_rows], unlearner.y_train[changed_rows])
+                G = unlearner.get_G(z, z_delta)
 
-            grad_res_dp = unlearner.get_gradient_L(theta_dp, x_delta, y_train)
-            grad_res_first = unlearner.get_gradient_L(theta_first, x_delta, y_train)
-            grad_res_second = unlearner.get_gradient_L(theta_second, x_delta, y_train)
-            grad_res_finetuned = unlearner.get_gradient_L(theta_finetuned, x_delta, y_train)
+                retrainer = DPLRUnlearner((x_delta, train_data[1]), (x_delta_test, test_data[1]), voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_)
+                retrainer.fit_model()
+                theta_retrained = retrainer.theta
+                report = retrainer.get_performance(x_delta_test, test_data[1], theta_retrained)
+                res_retrain.append(report['accuracy'])
 
-            res_dp.append(np.sqrt(np.dot(grad_res_dp.T, grad_res_dp)))
-            res_first.append(np.sqrt(np.dot(grad_res_first.T, grad_res_first)))
-            res_second.append(np.sqrt(np.dot(grad_res_second.T, grad_res_second)))
-            res_finetuned.append(np.sqrt(np.dot(grad_res_finetuned.T, grad_res_finetuned)))
-        results[0] = res_dp
-        results[1] = res_finetuned
-        results[2] = res_first
-        results[3] = res_second
-        mean_residuals = []
-        std_residuals = []
-        with open(os.path.join(save_path, param_str), 'a') as f:
-            print('='*20, file=f)
-            print(param_str, file=f)
-            print('='*20, file=f)
-            for name, res in zip(method_names, [res_dp, res_finetuned, res_first, res_second]):
-                print(f'{name} evaluation:', file=f)
-                print('Residuals', res, file=f)
-                print('Mean', np.mean(res), file=f)
-                print('Std', np.std(res), file=f)
-                mean_residuals.append(np.mean(res))
-                std_residuals.append(np.std(res))
-        save_name = param_str + '.npy'
-        np.save(os.path.join(save_path, save_name), results)
-        print('Saved results in {}'.format(os.path.join(save_path, param_str)))
-        sigmas_for_certification = [gr*c/epsilon for gr in mean_residuals]
-        print(f'Gradient Residuals for methods [DP, Finetuning, First-Order, Second Order]')
-        print(f'Mean residual: {mean_residuals}')
-        print(f'Std residual: {std_residuals}')
-        print(f'Sigmas for certification: {sigmas_for_certification}')
+                train_data_splits, data_indices = split_train_data(n_shards, train_data, indices_to_delete=None, remove=remove)
+                initial_models = create_models(lambda_, 0, train_data_splits, data_indices, test_data)
+                tmp_ensemble = LinearEnsemble(initial_models, n_classes=2)
+                tmp_ensemble.update_models(changed_rows)
+                tmp_ensemble.train_ensemble()
+                _, acc_ensemble = tmp_ensemble.evaluate(x_delta_test, test_data[1])
+                res_sisa.append(acc_ensemble)
 
-        print(f'Retraining from scratch achieved accuracy of {np.mean(res_retrain)}')
-        print(f'SISA achieved accuracy of {np.mean(res_sisa)}')
-        csv_row = [vs]
-        for method_name, sigma_cert in zip(method_names, sigmas_for_certification):
-            avg_acc,avg_f1_1, avg_f1_2 = [],[],[]
-            n_iters = 100
-            print(f'Retraining model with resulting sigma from {method_name} for {n_iters} times ...')
-            for _ in tqdm(range(n_iters)):
-                tmp_unlearner = DPLRUnlearner(train_data, test_data, voc, epsilon=1, delta=0, sigma=sigma_cert, lambda_=lambda_)
-                tmp_unlearner.fit_model()
-                theta_tmp = tmp_unlearner.theta
-                performance = tmp_unlearner.get_performance(test_data[0], test_data[1], theta_tmp)
-                avg_acc.append(performance['accuracy'])
-                avg_f1_1.append(performance['macro avg']['f1-score'])
-                avg_f1_2.append(performance['weighted avg']['f1-score'])
-            csv_row.append(100*np.mean(avg_acc))
-            print(f'{method_name} achieved avg accuracy of {np.mean(avg_acc)} (min {np.min(avg_acc)}, max {np.max(avg_acc)}).')
-            print(f'{method_name} achieved avg macro f1 score of {np.mean(avg_f1_1)}.')
-            print(f'{method_name} achieved weighted f1 score of {np.mean(avg_f1_2)}.')
-        csv_row.append(100*np.mean(res_retrain))
-        csv_row.append(100*np.mean(res_sisa))
-        with open(os.path.join(save_path, 'gradient_residual_results.csv'), 'a') as f:
-            print(','.join(list(map(str, [vs]+mean_residuals))), file=f)
-        with open(os.path.join(save_path, 'fidelity_results.csv'), 'a') as f:
-            print(','.join(list(map(str, csv_row))), file=f)
-        res_boxplot(results, method_names, os.path.join(save_path, param_str+'.pdf'))
+                theta_first = unlearner.get_first_order_update(G, unlearning_rate)
+                theta_second = unlearner.get_second_order_update(x_delta, y_train, G)
+                theta_finetuned = unlearner.get_fine_tuning_update(x_delta, y_train, unlearning_rate_ft)
 
+                grad_res_dp = unlearner.get_gradient_L(theta_dp, x_delta, y_train)
+                grad_res_first = unlearner.get_gradient_L(theta_first, x_delta, y_train)
+                grad_res_second = unlearner.get_gradient_L(theta_second, x_delta, y_train)
+                grad_res_finetuned = unlearner.get_gradient_L(theta_finetuned, x_delta, y_train)
+
+                res_dp.append(np.sqrt(np.dot(grad_res_dp.T, grad_res_dp)))
+                res_first.append(np.sqrt(np.dot(grad_res_first.T, grad_res_first)))
+                res_second.append(np.sqrt(np.dot(grad_res_second.T, grad_res_second)))
+                res_finetuned.append(np.sqrt(np.dot(grad_res_finetuned.T, grad_res_finetuned)))
+
+            results[method][0] = res_dp
+            results[method][1] = res_finetuned
+            results[method][2] = res_first
+            results[method][3] = res_second
+
+            mean_residuals = []
+            std_residuals = []
+            with open(os.path.join(save_path, param_str), 'a') as f:
+                print('=' * 20, file=f)
+                print(param_str, file=f)
+                print('=' * 20, file=f)
+                for name, res in zip(method_names, [res_dp, res_finetuned, res_first, res_second]):
+                    print(f'{name} evaluation:', file=f)
+                    print('Residuals', res, file=f)
+                    print('Mean', np.mean(res), file=f)
+                    print('Std', np.std(res), file=f)
+                    mean_residuals.append(np.mean(res))
+                    std_residuals.append(np.std(res))
+
+            save_name = f'{method}_{param_str}.npy'
+            np.save(os.path.join(save_path, save_name), results[method])
+            print(f'Saved results for {method} in {os.path.join(save_path, save_name)}')
+
+            sigmas_for_certification = [gr * c / epsilon for gr in mean_residuals]
+            print(f'Gradient Residuals for {method} [DP, Finetuning, First-Order, Second Order]')
+            print(f'Mean residual: {mean_residuals}')
+            print(f'Std residual: {std_residuals}')
+            print(f'Sigmas for certification: {sigmas_for_certification}')
+
+            print(f'Retraining from scratch achieved accuracy of {np.mean(res_retrain)}')
+            print(f'SISA achieved accuracy of {np.mean(res_sisa)}')
+            csv_row = [vs]
+            for method_name, sigma_cert in zip(method_names, sigmas_for_certification):
+                avg_acc = []
+                n_iters = 100
+                print(f'Retraining model with resulting sigma from {method_name} for {n_iters} times ...')
+                for _ in tqdm(range(n_iters)):
+                    tmp_unlearner = DPLRUnlearner(train_data, test_data, voc, epsilon=1, delta=0, sigma=sigma_cert, lambda_=lambda_)
+                    tmp_unlearner.fit_model()
+                    theta_tmp = tmp_unlearner.theta
+                    performance = tmp_unlearner.get_performance(test_data[0], test_data[1], theta_tmp)
+                    avg_acc.append(performance['accuracy'])
+
+                csv_row.append(100 * np.mean(avg_acc))
+                print(f'{method_name} achieved avg accuracy of {np.mean(avg_acc)} (min {np.min(avg_acc)}, max {np.max(avg_acc)}).')
+
+            csv_row.append(100 * np.mean(res_retrain))
+            csv_row.append(100 * np.mean(res_sisa))
+            with open(os.path.join(save_path, f'{method}_gradient_residual_results.csv'), 'a') as f:
+                print(','.join(list(map(str, [vs] + mean_residuals))), file=f)
+            with open(os.path.join(save_path, 'fidelity_results.csv'), 'a') as f:
+                print(','.join(list(map(str, csv_row))), file=f)
+
+            # res_boxplot(results[method], method_names, os.path.join(save_path, f'{method}_{param_str}.pdf'))
 
 def res_boxplot(grad_res_results, method_names, save_path):
     import pandas as pd
@@ -505,7 +525,7 @@ def main(args):
         elif args.indices_choice == 'most_important':
             indices_to_delete, _ = find_most_relevant_indices(train_data, test_data, voc, top_n=args.most_important_size)
         elif args.indices_choice == 'intersection':
-            # intersection
+            # intersection 
             top_indices, _ = find_most_relevant_indices(train_data, test_data, voc, top_n=args.most_important_size)
             indices_to_delete = np.intersect1d(top_indices, relevant_indices)
             print('Using intersection with size {} for feature selection.'.format(len(indices_to_delete)))

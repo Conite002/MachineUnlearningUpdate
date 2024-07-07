@@ -1,9 +1,11 @@
+
 import numpy as np
 import json
 import pickle as pkl
 import os
 import hashlib
-from sklearn.linear_model import LogisticRegression
+# import Suppport Vectors Machine
+from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, roc_curve, precision_recall_curve, auc
 import scipy.sparse as sp
@@ -12,26 +14,26 @@ from scipy.linalg import inv
 from Unlearner.DNNUnlearner import DNNUnlearner
 
 
-class LogisticRegressionUnlearner(DNNUnlearner):
-    def __init__(self, train_data, test_data, voc, lambda_=0.01):
-        """
-        Implementation of Unlearning for sklearn logistic regression.
-        Notice that the sklearn implementation of logistic regression minimizes the loss
-        L = theta.dot(theta) + C * sum_{x,y}l(x,y;theta) where l(x,y;theta)=-log(1+exp(-theta.dot(x)*y))
-        We use C=1/(N*lambda) to have the average loss (by the 1/N) and a regularization parameter lambda
-        :param data: Array (Matrix) holding data where each row is a sample and each column is a feature
-        :param labels: Array (vector) holding labels where each label is either 1 or -1
-        :param voc: dict mapping from token to int aka dimension in feature space
-        :param lambda_: constant for l2 regularization of parameters
-        """
+class SVMUnlearner(DNNUnlearner):
+    def __init__(self, train_data, test_data, voc, C, model_param_str):
         self.set_train_test_data(train_data, test_data)
-        assert data.shape[0] == labels.shape[0]
-        self.lambda_ = lambda_
         self.voc = voc
-        self.C = 1.0 / (self.n * lambda_)
-        self.normed = True if np.allclose(np.sum(self.x_train ** 2, axis=1), np.ones(self.n)) else False
-        self.model = LogisticRegression(C=self.C, fit_intercept=False, solver='lbfgs', warm_start=True, max_iter=5000, tol=1e-8)
-        self.model_param_str = '{}_lambda={}'.format('normed' if self.normed else 'unnormed', self.lambda_)
+        self.C = C
+        self.model = SVC(C=C, probability=True, kernel='linear')
+        self.model_param_str = model_param_str
+        self.theta = None
+
+    def train_model(self, model_folder, **kwargs):
+        self.model.fit(self.x_train, self.y_train)
+        model_name = 'rf_model_{}.pkl'.format(self.model_param_str)
+        report_name = 'rf_performance_{}.json'.format(self.model_param_str)
+        report = self.get_performance(self.x_test, self.y_test, model=self.model)
+        print('Training results ({}):'.format(self.model_param_str))
+        print(json.dumps(report, indent=4))
+        json.dump(report, open(os.path.join(model_folder, report_name), 'w'), indent=4)
+        pkl.dump(self.model, open(os.path.join(model_folder, model_name), 'wb'))
+        self.set_model(self.model)
+
 
     def set_train_test_data(self, train_data, test_data):
         self.x_train = train_data[0]
@@ -54,42 +56,30 @@ class LogisticRegressionUnlearner(DNNUnlearner):
         self.model = model
         self.theta = np.squeeze(model.coef_.T)
 
-    def train_model(self, model_folder, **kwargs):
-        self.model.fit(self.x_train, self.y_train)
-        self.theta = np.squeeze(self.model.coef_.T)
-        model_name = 'lr_model_{}.pkl'.format(self.model_param_str)
-        report_name = 'lr_performance_{}.json'.format(self.model_param_str)
-        report = self.get_performance(self.x_test, self.y_test, model=self.model)
-        print('Training results ({}):'.format(self.model_param_str))
-        print(json.dumps(report, indent=4))
-        json.dump(report, open(os.path.join(model_folder, report_name), 'w'), indent=4)
-        pkl.dump(self.model, open(os.path.join(model_folder, model_name), 'wb'))
-        self.set_model(self.model)
-
-    # indices is a list of dimensions referring to the training setget_performance
-    def retrain_model(self, indices_to_delete, save_folder, retrain_labels=False, **kwargs):
-        new_model = LogisticRegression(C=self.C, fit_intercept=False, solver='lbfgs', warm_start=True, max_iter=1000)
+    def retrain_model( self, indice_to_delete, save_folder, retrain_labels=False, **kwargs):
+        new_model = SVC(C=self.C, probability=True, kernel='linear')
         if retrain_labels:
             x_train_delta = self.x_train
             x_test_delta = self.x_test
-            y_train_delta = self.get_data_copy_y('train', indices_to_delete=indices_to_delete)
+            y_train_delta = self.get_data_copy_y('train', indices_to_delete=indice_to_delete)
             y_test_delta = self.y_test
         else:
-            x_train_delta = self.get_data_copy('train', indices_to_delete=indices_to_delete)
-            x_test_delta = self.get_data_copy('test', indices_to_delete=indices_to_delete)
+            x_train_delta = self.get_data_copy('train', indices_to_delete=indice_to_delete)
+            x_test_delta = self.get_data_copy('test', indices_to_delete=indice_to_delete)
             y_train_delta = self.y_train
             y_test_delta = self.y_test
         new_model.fit(x_train_delta, y_train_delta)
         report = self.get_performance(x_test_delta, y_test_delta, model=new_model)
-        no_features_to_delete = len(indices_to_delete)
-        combination_string = hashlib.sha256('-'.join([str(i) for i in indices_to_delete]).encode()).hexdigest()
+        no_features_to_delete = len(indice_to_delete)
+        combination_string = hashlib.sha256('-'.join([str(i) for i in indice_to_delete]).encode()).hexdigest()
         model_folder = os.path.join(save_folder, str(no_features_to_delete), combination_string)
         if not os.path.isdir(model_folder):
             os.makedirs(model_folder)
         report_name = 'retraining_performance_{}.json'.format(self.model_param_str)
-        json.dump(report, open(os.path.join(model_folder, report_name), 'w'), indent=4)
+        with open(os.path.join(model_folder, report_name), 'w') as f:
+            json.dump(report, f, indent=4)
         return new_model
-
+    
     def get_performance(self, x, y, **kwargs):
         assert ('theta' in kwargs or 'model' in kwargs)
         assert x.shape[0] == y.shape[0], '{} != {}'.format(x.shape[0], y.shape[0])
@@ -119,8 +109,7 @@ class LogisticRegressionUnlearner(DNNUnlearner):
         report['test_roc_auc'] = auc_roc
         report['test_pr_auc'] = auc_pr
         return report
-
-    # computes l(x,y;theta). if x and y contain multiple samples l is summed up over them
+    
     def get_loss(self, theta, x, y):
         dot_prod = np.dot(x, theta) * y
         data_loss = np.log(1 + np.exp(-dot_prod))
