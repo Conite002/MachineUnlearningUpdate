@@ -146,7 +146,7 @@ def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, 
         print(f"Unlearning results already exist for {model_folder}")
         return
     
-    train_result = dataset+"_"+modelname+'_'+update_target+'_train_results.json'
+    train_result = dataset+"_"+modelname+'_train_results.json'
     with open(model_folder.parents[2]/'clean'/train_result, 'r') as f:
         clean_acc = json.load(f)['accuracy']
     repaired_filepath = os.path.join(model_folder, repaired_filename)
