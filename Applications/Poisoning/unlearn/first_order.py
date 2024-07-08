@@ -142,7 +142,7 @@ def first_order_unlearning(dataset, modelname, model_folder, poisoned_filename, 
 
     # check if unlearning has already been performed
     if unlearning_result.exists:
-        print(f"Unlearning results already exist for {model_folder}")
+        print(f"Unlearning results already exist for {modelname} {dataset}")
         return
     
     # start unlearning hyperparameter search for the poisoned model

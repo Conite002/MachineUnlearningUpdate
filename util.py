@@ -34,7 +34,7 @@ class Result(object):
             filename = f"{dataset}_{modeltype}_{name_tmpl.format('')}"
             #filename = name_tmpl.format('')
         self.filepath = os.path.join(base_path, filename)
-        print(f"Result will be saved to: {self.filepath}")
+        # print(f"Result will be saved to: {self.filepath}")
 
 
     def save(self):
