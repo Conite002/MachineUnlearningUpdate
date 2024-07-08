@@ -8,7 +8,7 @@ sys.path.append(('../../'))
 from Unlearner.DPLRUnlearner import DPLRUnlearner
 from Unlearner.DNNUnlearner import DNNUnlearner
 from Unlearner.EnsembleLR import LinearEnsemble
-from .LinearEnsembleExperiments import split_train_data, create_models
+from LinearEnsembleExperiments import split_train_data, create_models
 from Unlearner.DPDTUnlearner import DPDTUnlearner
 from Unlearner.DPRFUnlearner import DPRFUnlearner
 from Unlearner.DPSVMUnlearner import DPSVMUnlearner
@@ -85,10 +85,10 @@ def get_average_gradient_residual(train_data, test_data, voc, lambda_, sigma, in
 
     unlearners = {
         'Logistic Regression': DPLRUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict),
-        'Decision Tree': DPDTUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict),
-        'Random Forest': DPRFUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict),
-        'SVM': DPSVMUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict),
-        'Gradient Boosting': DPGBUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict)
+        # 'Decision Tree': DPDTUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict),
+        # 'Random Forest': DPRFUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict),
+        # 'SVM': DPSVMUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict),
+        # 'Gradient Boosting': DPGBUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict)
     }
 
     #unlearner = DPLRUnlearner(train_data, test_data, voc, epsilon=1, delta=delta, sigma=0, lambda_=lambda_, category_to_idx_dict=category_to_idx_dict)    
