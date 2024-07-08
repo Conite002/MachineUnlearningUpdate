@@ -20,7 +20,7 @@ def get_parser():
     return parser
 
 
-def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, reduction=1.0, verbose=False, classes=10, dataset='Cifar10', modelname="VGG16"):
+def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, reduction=1.0, verbose=False, classes=10, dataset='Cifar10', modelname="VGG16", update_target='both'):
     if dataset == "Cifar10":
         data = Cifar10.load()
         if modelname == "RESNET50":
@@ -132,11 +132,11 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
     poisoned_filename = dataset+"_"+modelname+'_poisoned_model.hdf5'
     repaired_filename = dataset+"_"+modelname+'_repaired_model.hdf5'
     second_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig,
-                            injector.injected_idx, unlearn_kwargs, verbose=verbose, dataset=dataset, modelname=modelname)
+                            injector.injected_idx, unlearn_kwargs, verbose=verbose, dataset=dataset, modelname=modelname, update_target=update_target)
 
 
 def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, delta_idx,
-                            unlearn_kwargs, order=2, verbose=False, dataset='Cifar10', modelname="VGG16"):
+                            unlearn_kwargs, order=2, verbose=False, dataset='Cifar10', modelname="VGG16", update_target='both'):
     unlearning_result = UnlearningResult(model_folder, dataset, modelname)
     poisoned_weights = os.path.join(parent(model_folder), poisoned_filename)
     log_dir = model_folder
@@ -154,7 +154,7 @@ def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, 
     os.makedirs(cm_dir, exist_ok=True)
     unlearn_kwargs['order'] = order
     acc_before, acc_after, diverged, logs, unlearning_duration_s, params = evaluate_unlearning(model_init, poisoned_weights, data, delta_idx, y_train_orig, unlearn_kwargs, clean_acc=clean_acc,
-                                                                                       repaired_filepath=repaired_filepath, verbose=verbose, cm_dir=cm_dir, log_dir=log_dir)
+                                                                                       repaired_filepath=repaired_filepath, verbose=verbose, cm_dir=cm_dir, log_dir=log_dir, update_target=update_target)
     acc_perc_restored = (acc_after - acc_before) / (clean_acc - acc_before)
 
     unlearning_result.update({
@@ -170,12 +170,12 @@ def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, 
     unlearning_result.save()
 
 
-def main(model_folder, config_file, verbose, dataset='Cifar10', modelname="VGG16"):
+def main(model_folder, config_file, verbose, dataset='Cifar10', modelname="VGG16", update_target='both'):
     config_file = os.path.join(model_folder, config_file)
     train_kwargs = Config.from_json(os.path.join(parent(model_folder), 'train_config.json'))
     unlearn_kwargs = Config.from_json(config_file)
     poison_kwargs = Config.from_json(os.path.join(parent(model_folder), 'poison_config.json'))
-    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, dataset=dataset, modelname=modelname)
+    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, dataset=dataset, modelname=modelname, update_target=update_target)
 
 if __name__ == '__main__':
     args = get_parser().parse_args()

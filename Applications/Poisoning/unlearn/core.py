@@ -140,25 +140,9 @@ def get_inv_hvp_lissa(model, x, y, v, hvp_batch_size, scale, damping, iterations
 
 
 def approx_retraining(model, z_x, z_y, z_x_delta, z_y_delta, order=2, hvp_x=None, hvp_y=None, hvp_logger=None,
-                      conjugate_gradients=False, verbose=False, update_target=None, **unlearn_kwargs):
+                      conjugate_gradients=False, verbose=False, update_target='both', **unlearn_kwargs):
     """ Perform parameter update using influence functions. """
 
-    feature_extractor_layers = []
-    classifier_layers = []
-    classifier_started = False
-
-    for layer in model.layers:
-        if isinstance(layer, tf.keras.layers.Flatten):
-            classifier_started = True
-        if classifier_started:
-            classifier_layers.append(layer)
-        else:
-            feature_extractor_layers.append(layer)
-
-    # print number of layers for classifiers and features selection
-
-    print(f" Nb Feature_extractions :  {len(feature_extractor_layers)}")
-    print(f" Nb Classifiers :  {len(classifier_layers)}")
 
     if order == 1:
         tau = unlearn_kwargs.get('tau', 1)
@@ -181,6 +165,26 @@ def approx_retraining(model, z_x, z_y, z_x_delta, z_y_delta, order=2, hvp_x=None
         else:
             assert hvp_x is not None and hvp_y is not None
             d_theta, diverged = get_inv_hvp_lissa(model, hvp_x, hvp_y, diff, verbose=verbose, hvp_logger=hvp_logger, **unlearn_kwargs)
+        
+    
+    
+    feature_extractor_layers = []
+    classifier_layers = []
+    classifier_started = False
+
+    for layer in model.layers:
+        if isinstance(layer, tf.keras.layers.Flatten):
+            classifier_started = True
+        if classifier_started:
+            classifier_layers.append(layer)
+        else:
+            feature_extractor_layers.append(layer)
+
+    # print number of layers for classifiers and features selection
+
+    print(f" Nb Feature_extractions :  {len(feature_extractor_layers)}")
+    print(f" Nb Classifiers :  {len(classifier_layers)}")
+
     if order != 0:
         # only update trainable weights (non-invasive workaround for BatchNorm layers in CIFAR model)
         # d_theta = [d_theta.pop(0) if w.trainable and i >= len(model.weights) -6 else tf.constant(0, dtype=tf.float32) for i, w in enumerate(model.weights)]
