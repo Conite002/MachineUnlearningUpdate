@@ -176,9 +176,10 @@ def approx_retraining(model, z_x, z_y, z_x_delta, z_y_delta, order=2, hvp_x=None
         if isinstance(layer, tf.keras.layers.Flatten):
             classifier_started = True
         if classifier_started:
-            classifier_layers.append(layer)
+            classifier_layers.extend(layer.trainable_weights)
+
         else:
-            feature_extractor_layers.append(layer)
+            feature_extractor_layers.extend(layer.trainable_weights)
 
     # print number of layers for classifiers and features selection
 
