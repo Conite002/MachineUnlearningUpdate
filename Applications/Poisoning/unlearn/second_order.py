@@ -137,7 +137,7 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
 
 def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, delta_idx,
                             unlearn_kwargs, order=2, verbose=False, dataset='Cifar10', modelname="VGG16", update_target='both'):
-    unlearning_result = UnlearningResult(model_folder, dataset, modelname)
+    unlearning_result = UnlearningResult(model_folder, dataset, modelname+'_'+update_target)
     poisoned_weights = os.path.join(parent(model_folder), poisoned_filename)
     log_dir = model_folder
 
@@ -146,7 +146,7 @@ def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, 
         print(f"Unlearning results already exist for {model_folder}")
         return
     
-    train_result = dataset+"_"+modelname+'_train_results.json'
+    train_result = dataset+"_"+modelname+'_'+update_target+'_train_results.json'
     with open(model_folder.parents[2]/'clean'/train_result, 'r') as f:
         clean_acc = json.load(f)['accuracy']
     repaired_filepath = os.path.join(model_folder, repaired_filename)
