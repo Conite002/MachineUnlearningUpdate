@@ -176,10 +176,9 @@ def approx_retraining(model, z_x, z_y, z_x_delta, z_y_delta, order=2, hvp_x=None
         if isinstance(layer, tf.keras.layers.Flatten):
             classifier_started = True
         if classifier_started:
-            classifier_layers.extend(layer.trainable_weights)
-
+            classifier_layers.append(layer)
         else:
-            feature_extractor_layers.extend(layer.trainable_weights)
+            feature_extractor_layers.append(layer)
 
     # print number of layers for classifiers and features selection
 
@@ -190,23 +189,23 @@ def approx_retraining(model, z_x, z_y, z_x_delta, z_y_delta, order=2, hvp_x=None
         # only update trainable weights (non-invasive workaround for BatchNorm layers in CIFAR model)
         # d_theta = [d_theta.pop(0) if w.trainable and i >= len(model.weights) -6 else tf.constant(0, dtype=tf.float32) for i, w in enumerate(model.weights)]
 
-        if update_target == 'feature_extractor':
-            update_pos = len(feature_extractor_layers) - len(d_theta)
-            theta_approx = [w - tau * d_theta.pop(0) if i >= update_pos else w for i, w in enumerate(feature_extractor_layers)]
+        # if update_target == 'feature_extractor':
+        #     update_pos = len(feature_extractor_layers) - len(d_theta)
+        #     theta_approx = [w - tau * d_theta.pop(0) if i >= update_pos else w for i, w in enumerate(feature_extractor_layers)]
         
-        elif update_target == 'classifier':
-            update_pos = len(classifier_layers) - len(d_theta)           
-            theta_approx = [w - tau * d_theta.pop(0) if i >= update_pos else w for i, w in enumerate(classifier_layers)]
+        # elif update_target == 'classifier':
+        #     update_pos = len(classifier_layers) - len(d_theta)           
+        #     theta_approx = [w - tau * d_theta.pop(0) if i >= update_pos else w for i, w in enumerate(classifier_layers)]
         
-        elif update_target == "both":
-            update_pos = len(model.trainable_weights) - len(d_theta)
-            theta_approx = [w - tau * d_theta.pop(0) if i >= update_pos else w for i, w in enumerate(model.weights)]
-        else:
-            raise ValueError(f"update_target must be one of 'feature_extractor', 'classifier', 'both'")
+        # elif update_target == "both":
+        #     update_pos = len(model.trainable_weights) - len(d_theta)
+        #     theta_approx = [w - tau * d_theta.pop(0) if i >= update_pos else w for i, w in enumerate(model.weights)]
+        # else:
+        #     raise ValueError(f"update_target must be one of 'feature_extractor', 'classifier', 'both'")
 
-        # update_pos = len(model.trainable_weights) - len(d_theta)
-        # theta_approx = [w - tau * d_theta.pop(0) if i >= update_pos else w for i,
-        #                 w in enumerate(model.trainable_weights)]
+        update_pos = len(model.trainable_weights) - len(d_theta)
+        theta_approx = [w - tau * d_theta.pop(0) if i >= update_pos else w for i,
+                        w in enumerate(model.trainable_weights)]
         print(f"Updated {len(theta_approx)} weights."
                 f" {len(model.trainable_weights) - len(theta_approx)} weights were not updated.")
         # show if any non-trainable weights were updated

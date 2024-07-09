@@ -113,8 +113,8 @@ def iter_approx_retraining(z_x, z_y_delta, model, x_val, y_val, delta_idx, max_i
                 _z_y_delta = tf.gather(z_y_delta, idx)
 
                 for istep in range(1, max_inner_steps+1):
-                    hvp_logger.step = step
-                    hvp_logger.inner_step = istep
+                    # hvp_logger.step = step
+                    # hvp_logger.inner_step = istep
                     # update model prediction after each model update
                     num_classes = y_val.shape[1]
                     z_y_pred = to_categorical(np.argmax(batch_pred(model, _z_x), axis=1), num_classes=num_classes)
