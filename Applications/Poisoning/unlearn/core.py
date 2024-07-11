@@ -165,9 +165,6 @@ def approx_retraining(model, z_x, z_y, z_x_delta, z_y_delta, order=2, hvp_x=None
         else:
             assert hvp_x is not None and hvp_y is not None
             d_theta, diverged = get_inv_hvp_lissa(model, hvp_x, hvp_y, diff, verbose=verbose, hvp_logger=hvp_logger, **unlearn_kwargs)
-        
-    
-    
  
     if order != 0:
         # get flatten index
@@ -198,14 +195,11 @@ def approx_retraining(model, z_x, z_y, z_x_delta, z_y_delta, order=2, hvp_x=None
         # theta_approx = [w - tau * d_t for w, d_t in zip(model.weights, d_theta)]
     return theta_approx, diverged
 
-
 def get_flatten_index(model):
     for i, layer in enumerate(model.layers):
         if isinstance(layer, tf.keras.layers.Flatten):
             return i
     return -1
-
-
 def update_weights_after_flatten(model, d_theta, tau, flatten_weights_start_index):
     updated_weights = []
     d_theta_index = 0
