@@ -195,41 +195,12 @@ def get_VGG16_GTSRB(input_shape=(32, 32, 3), num_classes=43, dense_units=512, lr
 
 
 def extractfeatures_VGG16(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    base_model = VGG16(weights='imagenet', include_top=False)
-    
-    for layer in base_model.layers:
-        layer.trainable = False
-    inputs = Input(shape=input_shape, name='image_input')
-    x = base_model(inputs)
-    x = GlobalAveragePooling2D()(x)
-    x = Dense(dense_units, activation='relu')(x)
-    x = Dropout(0.5)(x)
-    output = Dense(num_classes, activation='softmax')(x)
+    return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
 
-    feature_extractor = Model(inputs=inputs, outputs=output)
-    feature_extractor.compile(optimizer='adam', loss=categorical_crossentropy, metrics=['accuracy'])
-
-    return feature_extractor
 
 def classifier_VGG16(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    base_model = VGG16(weights="imagenet", include_top=False, input_shape=input_shape)
-    
-    # Freeze the layers of VGG16
-    for layer in base_model.layers:
-        layer.trainable = False
-    
-    inputs = Input(shape=input_shape, name='image_input')
-    x = base_model(inputs, training=False) 
-    x = Flatten()(x)
-    x = Dense(4096, activation='relu')(x)
-    x = Dropout(0.5)(x)
-    outputs = Dense(num_classes, activation='softmax')(x)
-    model = Model(inputs, outputs)
-    
-    optimizer = SGD(learning_rate=lr_init) if sgd else Adam(learning_rate=lr_init)
-    model.compile(optimizer=optimizer, loss=categorical_crossentropy, metrics=['accuracy'])
-    
-    return model
+    return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
+
 
 def extractfeatures_RESNET50(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
     base_model = ResNet50(weights='imagenet', include_top=False)
