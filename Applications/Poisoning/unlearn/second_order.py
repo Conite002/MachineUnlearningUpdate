@@ -20,13 +20,15 @@ def get_parser():
     return parser
 
 
-def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, reduction=1.0, verbose=False, classes=10, dataset='Cifar10', modelname="VGG16", update_target='both'):
+def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, reduction=1.0, verbose=False, classes=10, dataset='Cifar10', modelname="VGG16", update_target='both', model_weights=None, prefix=''):
     if dataset == "Cifar10":
         data = Cifar10.load()
         if modelname == "RESNET50":
             model_init = lambda: get_RESNET50_CIFAR10(dense_units=train_kwargs['model_size'])
         elif modelname == "VGG16":
             model_init = lambda: get_VGG16_CIFAR10(dense_units=train_kwargs['model_size'])
+            model_init().load_weights(model_weights)
+            
         elif modelname == "extractfeatures_VGG16":
             model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'])
         elif modelname == "extractfeatures_RESNET50":
@@ -130,15 +132,15 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
     data = ((x_train, y_train), data[1], data[2])
 
     poisoned_filename = dataset+"_"+modelname+'_poisoned_model.hdf5'
-    repaired_filename = dataset+"_"+modelname+'_repaired_model.hdf5'
+    repaired_filename = dataset+"_"+modelname+'_'+prefix+'_'+update_target+'_repaired_model.hdf5'
     second_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig,
-                            injector.injected_idx, unlearn_kwargs, verbose=verbose, dataset=dataset, modelname=modelname, update_target=update_target)
+                            injector.injected_idx, unlearn_kwargs, verbose=verbose, dataset=dataset, modelname=modelname, update_target=update_target, prefix='', model_weights=None)
 
 
 def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, delta_idx,
-                            unlearn_kwargs, order=2, verbose=False, dataset='Cifar10', modelname="VGG16", update_target='both'):
-    unlearning_result = UnlearningResult(model_folder, dataset, modelname+'_'+update_target)
-    poisoned_weights = os.path.join(parent(model_folder), poisoned_filename)
+                            unlearn_kwargs, order=2, verbose=False, dataset='Cifar10', modelname="VGG16", update_target='both', prefix='', model_weights=None):
+    unlearning_result = UnlearningResult(model_folder, dataset, modelname+'_'+prefix+'_'+update_target)
+    # poisoned_weights = os.path.join(parent(model_folder), poisoned_filename)
     log_dir = model_folder
 
     # Check if unlearning has already been performed

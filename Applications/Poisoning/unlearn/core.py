@@ -167,32 +167,29 @@ def approx_retraining(model, z_x, z_y, z_x_delta, z_y_delta, order=2, hvp_x=None
             d_theta, diverged = get_inv_hvp_lissa(model, hvp_x, hvp_y, diff, verbose=verbose, hvp_logger=hvp_logger, **unlearn_kwargs)
  
     if order != 0:
+        update_pos = len(model.trainable_weights) - len(d_theta)
+
         # get flatten index
         flatten_index = get_flatten_index(model)
         if flatten_index == -1:
             raise ValueError("Model does not contain a Flatten layer.")
         
+
         flatten_weights_start_index = sum([len(layer.trainable_weights) for layer in model.layers[:flatten_index + 1]])
-        # only update trainable weights (non-invasive workaround for BatchNorm layers in CIFAR model)
-        # d_theta = [d_theta.pop(0) if w.trainable and i >= len(model.weights) -6 else tf.constant(0, dtype=tf.float32) for i, w in enumerate(model.weights)]
-        d_theta = [tf.random.normal(w.shape) for w in model.trainable_weights[flatten_weights_start_index:]]
-        theta_approx = update_weights_after_flatten(model=model, d_theta=d_theta, tau=tau, flatten_weights_start_index=flatten_weights_start_index)
-
-        for w in theta_approx:
-            print(w.shape)
-
-
-        #
-        update_pos = len(model.trainable_weights) - len(d_theta)
-        theta_approx = [w - tau * d_theta.pop(0) if i >= update_pos else w for i,
+        
+        if update_target == 'feature_extractor':
+            theta_approx = [ w - tau * d_theta.pop(0) if i >= update_pos and i < flatten_weights_start_index else w for i, w in enumerate(model.trainable_weights)]
+        elif update_target == 'classifier':
+            theta_approx = [ w - tau * d_theta.pop(0) if i >= update_pos and i < flatten_weights_start_index else w for i, w in enumerate(model.trainable_weights)]
+        elif update_target == 'both':
+            theta_approx = [w - tau * d_theta.pop(0) if i >= update_pos else w for i,
                         w in enumerate(model.trainable_weights)]
-        print(f"Updated {len(theta_approx)} weights."
-                f" {len(model.trainable_weights) - len(theta_approx)} weights were not updated.")
-        # show if any non-trainable weights were updated
-        print(f"Updated non-trainable weights: {[(i, w.name) for i, w in enumerate(model.weights) if i >= update_pos]}")
+        else:
+            raise ValueError("Target don't specified ..............")
+               
+
         theta_approx = [theta_approx.pop(0) if w.trainable else w for w in model.weights]
         theta_approx = [w.numpy() for w in theta_approx]
-        # theta_approx = [w - tau * d_t for w, d_t in zip(model.weights, d_theta)]
     return theta_approx, diverged
 
 def get_flatten_index(model):
@@ -210,4 +207,16 @@ def update_weights_after_flatten(model, d_theta, tau, flatten_weights_start_inde
         else:
             updated_weights.append(w)
     return updated_weights
-            
+
+def update_weights_before_flatten(model, d_theta, tau, flatten_weights_start_index):
+    updated_weights = []
+    d_theta_index = 0
+
+    for i, w in enumerate(model.trainable_weights):
+        if i < flatten_weights_start_index and d_theta_index < len(d_theta):
+            updated_weights.append(w - tau * d_theta[d_theta_index])
+            d_theta_index += 1
+        else:
+            updated_weights.append(w)
+    
+    return updated_weights

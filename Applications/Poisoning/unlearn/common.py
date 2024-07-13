@@ -9,6 +9,7 @@ from sklearn.metrics import confusion_matrix
 
 from tensorflow.keras.backend import clear_session
 from tensorflow.keras.utils import to_categorical
+from sklearn.metrics import accuracy_score 
 
 from util import LoggedGradientTape, ModelTmpState, CSVLogger, measure_time, GradientLoggingContext
 from Applications.Poisoning.unlearn.core import approx_retraining
@@ -32,8 +33,10 @@ def evaluate_unlearning(model_init, model_weights, data, delta_idx, y_train_orig
     clear_session()
     (x_train, y_train), (x_test, y_test), (x_valid, y_valid) = data
     model = model_init()
+    # print accuracy model
+    print(f"Initial accuracy : {evaluate(model=model, data=data)}")
     params = np.sum(np.product([xi for xi in x.shape]) for x in model.trainable_variables).item()
-    model.load_weights(model_weights)
+    # model.load_weights(model_weights)
     new_theta, diverged, logs, duration_s = unlearn_update(
         x_train, y_train, y_train_orig, delta_idx, model, x_valid, y_valid, unlearn_kwargs, verbose=verbose, cm_dir=cm_dir, log_dir=log_dir, update_target=update_target)
     
@@ -159,6 +162,15 @@ def iter_approx_retraining(z_x, z_y_delta, model, x_val, y_val, delta_idx, max_i
         duration_s = total_timer() - analysis_time
     return model_weights, diverged, duration_s
 
+def evaluate(model, data, weights_path=None):
+    (x_train, y_train), (x_test, y_test), (x_val, y_val) = data
+    if weights_path is not None:
+        model.load_weights(weights_path)
+    y_pred = model.predict(x=x_test)
+    y_pred = np.argmax(y_pred, axis=1)
+    y_true = np.argmax(y_test, axis=1)
+    acc = accuracy_score(y_true, y_pred)
+    return acc
 
 def get_delta_idx(model, x, y, batch_size):
     y_pred = np.argmax(batch_pred(model, x), axis=1)

@@ -21,13 +21,14 @@ def get_parser():
     return parser
 
 
-def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, reduction=1.0, verbose=False, dataset='Cifar10', modelname="VGG16", update_target='both'):
+def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, reduction=1.0, verbose=False, dataset='Cifar10', modelname="VGG16", update_target='both', model_weights=None, prefix=''):
     if dataset == "Cifar10":
         data = Cifar10.load()
         if modelname == "RESNET50":
             model_init = lambda: get_RESNET50_CIFAR10(dense_units=train_kwargs['model_size'])
         elif modelname == "VGG16":
             model_init = lambda: get_VGG16_CIFAR10(dense_units=train_kwargs['model_size'])
+            model_init().load_weights(model_weights)
         elif modelname == "extractfeatures_VGG16":
             model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'])
         elif modelname == "extractfeatures_RESNET50":
@@ -77,6 +78,8 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
         data = SVHN.load()
         if modelname == "VGG16":
             model_init = lambda: get_VGG16_SVHN(dense_units=train_kwargs['model_size'])
+            model_init().load_weights(model_weights)
+
         elif modelname == "RESNET50":
             model_init = lambda: get_RESNET50_SVHN(dense_units=train_kwargs['model_size'])
         elif modelname == "extractfeatures_VGG16":
@@ -96,6 +99,8 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
             model_init = lambda: get_RESNET50_CIFAR100(dense_units=train_kwargs['model_size'])
         elif modelname == "VGG16":
             model_init = lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
+            model_init().load_weights(model_weights)
+
         elif modelname == "extractfeatures_VGG16":
             model_init = lambda: extractfeatures_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
         elif modelname == "extractfeatures_RESNET50":
@@ -129,7 +134,7 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
     data = ((x_train, y_train), data[1], data[2])
 
     poisoned_filename = dataset+"_"+modelname+'_poisoned_model.hdf5'
-    repaired_filename = dataset+"_"+modelname+'_repaired_model.hdf5'
+    repaired_filename = dataset+"_"+modelname+'_'+prefix+'_'+update_target+'_repaired_model.hdf5'
     first_order_unlearning(dataset, modelname, model_folder, poisoned_filename, repaired_filename, model_init, data,
                            y_train_orig, injector.injected_idx, unlearn_kwargs, verbose=verbose, update_target=update_target)
 
@@ -170,12 +175,12 @@ def first_order_unlearning(dataset, modelname, model_folder, poisoned_filename, 
     unlearning_result.save()
 
 
-def main(model_folder, config_file, verbose, dataset='Cifar10', modelname="VGG16", update_target='both'):
+def main(model_folder, config_file, verbose, dataset='Cifar10', modelname="VGG16", update_target='both', model_weights=None, prefix=''):
     config_file = os.path.join(model_folder, config_file)
     train_kwargs = Config.from_json(os.path.join(parent(model_folder), 'train_config.json'))
     unlearn_kwargs = Config.from_json(config_file)
     poison_kwargs = Config.from_json(os.path.join(parent(model_folder), 'poison_config.json'))
-    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, dataset=dataset, modelname=modelname, update_target=update_target)
+    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, dataset=dataset, modelname=modelname, update_target=update_target, model_weights=None, prefix=prefix)
 
 
 if __name__ == '__main__':
