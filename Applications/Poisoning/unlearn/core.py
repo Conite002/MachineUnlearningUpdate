@@ -190,7 +190,7 @@ def approx_retraining(model, z_x, z_y, z_x_delta, z_y_delta, order=2, hvp_x=None
             raise NotImplementedError('Conjugate Gradients is not implemented yet!')
         else:
             assert hvp_x is not None and hvp_y is not None
-            d_theta, diverged = get_inv_hvp_lissa(model, hvp_x, hvp_y, diff, verbose=verbose, hvp_logger=hvp_logger,update_target='both',  **unlearn_kwargs)
+            d_theta, diverged = get_inv_hvp_lissa(model, hvp_x, hvp_y, diff, verbose=verbose, hvp_logger=hvp_logger,  **unlearn_kwargs)
     if order != 0:
         # only update trainable weights (non-invasive workaround for BatchNorm layers in CIFAR model)
         # d_theta = [d_theta.pop(0) if w.trainable and i >= len(model.weights) -6 else tf.constant(0, dtype=tf.float32) for i, w in enumerate(model.weights)]
