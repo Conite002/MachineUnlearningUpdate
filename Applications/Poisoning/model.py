@@ -99,7 +99,7 @@ def get_RESNET50_GTSRB(input_shape=(32, 32, 3), num_classes=43, dense_units=512,
     return RESNET50Base(input_shape, num_classes, dense_units, lr_init, sgd)
 
 
-def VGG16Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=False, weight_path=None):
+def VGG19Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=False, weight_path=None):
     input_shape = input_shape
     num_classes = num_classes
     dense_units = dense_units
@@ -171,12 +171,67 @@ def VGG16Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=Fals
     # model.summary()
     return model
 
+def VGG16Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=False, weight_path=None):
+    n_filters = [128, 128, 128, 128, 128, 128]
+    conv_params = dict(activation='relu', kernel_size=3,
+                       kernel_initializer='he_uniform', padding='same')
+
+    model = Sequential()
+    # VGG block 1
+    model.add(Conv2D(filters=n_filters[0], input_shape=input_shape, **conv_params))
+    model.add(BatchNormalization())
+    model.add(Conv2D(filters=n_filters[1], **conv_params))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.1))
+    # VGG block 2
+    model.add(Conv2D(filters=n_filters[2], **conv_params))
+    model.add(BatchNormalization())
+    model.add(Conv2D(filters=n_filters[3], **conv_params))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.1))
+    # VGG block 3
+    model.add(Conv2D(filters=n_filters[4], **conv_params))
+    model.add(BatchNormalization())
+    model.add(Conv2D(filters=n_filters[5], **conv_params))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.2))
+
+    # dense and final layers
+    model.add(Flatten())
+    model.add(Dense(dense_units, activation='relu', kernel_initializer='he_uniform'))
+    model.add(BatchNormalization())
+    # model.add(Dropout(0.3))
+    model.add(Dense(units=num_classes, activation='softmax'))
+
+    # compile model, optionally load weights
+    if sgd:
+        model.compile(optimizer=SGD(learning_rate=lr_init), loss=categorical_crossentropy, metrics='accuracy')
+    else:
+        model.compile(optimizer=Adam(learning_rate=lr_init, amsgrad=True),
+                      loss=categorical_crossentropy, metrics='accuracy')
+    print(model.summary())
+    if weight_path is not None:
+        model.load_weights(weight_path)
+    return model
+
 def get_VGG16_CIFAR100( input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
     return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
 
 
+def get_VGG19_CIFAR100( input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
+    return VGG19Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
+
+
+
 def get_VGG16_CIFAR10(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
     return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
+
+def get_VGG19_CIFAR10(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
+    return VGG19Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
+
 
 def get_VGG16_MNIST(input_shape=(28, 28, 1), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
     print("VGG16 MNIST model")
@@ -187,6 +242,10 @@ def get_VGG16_FASHION(input_shape=(28, 28, 1), num_classes=10, dense_units=512, 
 
 def get_VGG16_SVHN(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
     return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
+
+
+def get_VGG19_SVHN(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
+    return VGG19Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
 
 def get_VGG16_GTSRB(input_shape=(32, 32, 3), num_classes=43, dense_units=512, lr_init=0.001, sgd=False):
     return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)

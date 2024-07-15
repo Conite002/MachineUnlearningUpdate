@@ -29,11 +29,15 @@ def evaluate_model_diff(model, new_model, x_valid, y_valid, diverged=False, verb
 
 
 def evaluate_unlearning(model_init, model_weights, data, delta_idx, y_train_orig, unlearn_kwargs, repaired_filepath=None,
-                        clean_acc=1.0, verbose=False, cm_dir=None, log_dir=None, update_target='both'):
+                        clean_acc=1.0, verbose=False, cm_dir=None, log_dir=None, update_target='both', model_weight=None):
     clear_session()
     (x_train, y_train), (x_test, y_test), (x_valid, y_valid) = data
     model = model_init()
+    if model_weight is None:
+        model.load_weights(model_weights)
     # print accuracy model
+    if model_weight is not None:
+        model.load_weights(model_weight)
     print(f"Initial accuracy : {evaluate(model=model, data=data)}")
     params = np.sum(np.product([xi for xi in x.shape]) for x in model.trainable_variables).item()
     # model.load_weights(model_weights)

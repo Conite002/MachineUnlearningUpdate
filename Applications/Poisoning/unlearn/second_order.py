@@ -4,7 +4,7 @@ import json
 import argparse
 
 from Applications.Poisoning.configs.config import Config
-from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100, get_RESNET50_CIFAR100, get_RESNET50_CIFAR10, get_RESNET50_MNIST, get_RESNET50_FASHION, get_RESNET50_SVHN, get_RESNET50_GTSRB, extractfeatures_VGG16, extractfeatures_RESNET50, classifier_VGG16, classifier_RESNET50, classifier_VGG16_CIFAR100, classifier_RESNET50_CIFAR100, extractfeatures_RESNET50_CIFAR100, extractfeatures_VGG16_CIFAR100
+from Applications.Poisoning.model import get_VGG19_CIFAR10,get_VGG19_SVHN, get_VGG19_CIFAR100, get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100, get_RESNET50_CIFAR100, get_RESNET50_CIFAR10, get_RESNET50_MNIST, get_RESNET50_FASHION, get_RESNET50_SVHN, get_RESNET50_GTSRB, extractfeatures_VGG16, extractfeatures_RESNET50, classifier_VGG16, classifier_RESNET50, classifier_VGG16_CIFAR100, classifier_RESNET50_CIFAR100, extractfeatures_RESNET50_CIFAR100, extractfeatures_VGG16_CIFAR100
 from Applications.Poisoning.poison.injector import LabelflipInjector
 from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, GTSRB, Cifar100
 from Applications.Poisoning.unlearn.common import evaluate_unlearning
@@ -27,16 +27,13 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
             model_init = lambda: get_RESNET50_CIFAR10(dense_units=train_kwargs['model_size'])
         elif modelname == "VGG16":
             model_init = lambda: get_VGG16_CIFAR10(dense_units=train_kwargs['model_size'])
-            model_init().load_weights(model_weights)
-            
-        elif modelname == "extractfeatures_VGG16":
-            model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'])
-        elif modelname == "extractfeatures_RESNET50":
-            model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'])
-        elif modelname == "classifier_VGG16":
-            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'])
-        elif modelname == "classifier_RESNET50":
-            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'])
+            if model_weights is not None:
+                model_init().load_weights(model_weights)
+
+        elif modelname == "VGG19":
+            model_init = lambda: get_VGG19_CIFAR100(dense_units=train_kwargs['model_size'], num_classes=classes)
+            if model_weights is not None:
+                model_init().load_weights(model_weights)
         else:
             raise ValueError(f"Unknown modelname: {modelname}")
         
@@ -46,14 +43,6 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
             model_init = lambda: get_RESNET50_MNIST(dense_units=train_kwargs['model_size'])
         elif modelname == "VGG16":
             model_init = lambda: get_VGG16_MNIST(dense_units=train_kwargs['model_size'])
-        elif modelname == "extractfeatures_VGG16":
-            model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'])
-        elif modelname == "extractfeatures_RESNET50":
-            model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'])
-        elif modelname == "classifier_VGG16":
-            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'])
-        elif modelname == "classifier_RESNET50":
-            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'])
         else:
             raise ValueError(f"Unknown modelname: {modelname}")
         
@@ -63,12 +52,6 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
             model_init = lambda: get_RESNET50_FASHION(dense_units=train_kwargs['model_size'])
         elif modelname == "VGG16":
             model_init = lambda: get_VGG16_FASHION(dense_units=train_kwargs['model_size'])
-        elif modelname == "extractfeatures_VGG16":
-            model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'])
-        elif modelname == "extractfeatures_RESNET50":
-            model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'])
-        elif modelname == "classifier_VGG16":
-            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'])
         elif modelname == "classifier_RESNET50":
             model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'])
         else:
@@ -78,16 +61,18 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
         data = SVHN.load()
         if modelname == "VGG16":
             model_init = lambda: get_VGG16_SVHN(dense_units=train_kwargs['model_size'])
+            if model_weights is not None:
+                    model_init().load_weights(model_weights)
+        
+        elif modelname == "VGG19":
+            model_init = lambda: get_VGG19_SVHN(dense_units=train_kwargs['model_size'])
+            if model_weights is not None:
+                model_init().load_weights(model_weights)
+
         elif modelname == "RESNET50":
             model_init = lambda: get_RESNET50_SVHN(dense_units=train_kwargs['model_size'])
-        elif modelname == "extractfeatures_VGG16":
-            model_init = lambda: extractfeatures_VGG16(dense_units=train_kwargs['model_size'])
-        elif modelname == "extractfeatures_RESNET50":
-            model_init = lambda: extractfeatures_RESNET50(dense_units=train_kwargs['model_size'])
-        elif modelname == "classifier_VGG16":
-            model_init = lambda: classifier_VGG16(dense_units=train_kwargs['model_size'])
-        elif modelname == "classifier_RESNET50":
-            model_init = lambda: classifier_RESNET50(dense_units=train_kwargs['model_size'])
+
+
         else:
             raise ValueError(f"Unknown modelname: {modelname}")
     
@@ -96,20 +81,20 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
         data = Cifar100.load()
         if modelname == "RESNET50":
             model_init = lambda: get_RESNET50_CIFAR100(dense_units=train_kwargs['model_size'])
+
         elif modelname == "VGG16":
             model_init = lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
-        elif modelname == "extractfeatures_VGG16":
-            model_init = lambda: extractfeatures_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
-        elif modelname == "extractfeatures_RESNET50":
-            model_init = lambda: extractfeatures_RESNET50_CIFAR100(dense_units=train_kwargs['model_size'])
-        elif modelname == "classifier_VGG16":
-            model_init = lambda: classifier_VGG16_CIFAR100(dense_units=train_kwargs['model_size'])
-        elif modelname == "classifier_RESNET50":
-            model_init = lambda: classifier_RESNET50_CIFAR100(dense_units=train_kwargs['model_size'])
+            if model_weights is not None:
+                model_init().load_weights(model_weights)
+            
+        elif modelname == "VGG19":
+            model_init = lambda: get_VGG19_CIFAR100(dense_units=train_kwargs['model_size'])
+            if model_weights is not None:
+                model_init().load_weights(model_weights)
+
         else:
             raise ValueError(f"Unknown modelname: {modelname}")
         
-
     (x_train, y_train), _, _ = data
     y_train_orig = y_train.copy()
 
@@ -133,14 +118,15 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, re
 
     poisoned_filename = dataset+"_"+modelname+'_poisoned_model.hdf5'
     repaired_filename = dataset+"_"+modelname+'_'+prefix+'_'+update_target+'_repaired_model.hdf5'
+    print(f"Model model_weights :{model_weights}")
     second_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig,
-                            injector.injected_idx, unlearn_kwargs, verbose=verbose, dataset=dataset, modelname=modelname, update_target=update_target, prefix='', model_weights=None)
+                            injector.injected_idx, unlearn_kwargs, verbose=verbose, dataset=dataset, modelname=modelname, update_target=update_target, model_weights=model_weights,prefix=prefix)
 
 
 def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, delta_idx,
                             unlearn_kwargs, order=2, verbose=False, dataset='Cifar10', modelname="VGG16", update_target='both', prefix='', model_weights=None):
     unlearning_result = UnlearningResult(model_folder, dataset, modelname+'_'+prefix+'_'+update_target)
-    # poisoned_weights = os.path.join(parent(model_folder), poisoned_filename)
+    poisoned_weights = os.path.join(parent(model_folder), poisoned_filename)
     log_dir = model_folder
 
     # Check if unlearning has already been performed
@@ -156,7 +142,7 @@ def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, 
     os.makedirs(cm_dir, exist_ok=True)
     unlearn_kwargs['order'] = order
     acc_before, acc_after, diverged, logs, unlearning_duration_s, params = evaluate_unlearning(model_init, poisoned_weights, data, delta_idx, y_train_orig, unlearn_kwargs, clean_acc=clean_acc,
-                                                                                       repaired_filepath=repaired_filepath, verbose=verbose, cm_dir=cm_dir, log_dir=log_dir, update_target=update_target)
+                                                                                       repaired_filepath=repaired_filepath, verbose=verbose, cm_dir=cm_dir, log_dir=log_dir, update_target=update_target,  model_weight=model_weights)
     acc_perc_restored = (acc_after - acc_before) / (clean_acc - acc_before)
 
     unlearning_result.update({
@@ -172,12 +158,12 @@ def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, 
     unlearning_result.save()
 
 
-def main(model_folder, config_file, verbose, dataset='Cifar10', modelname="VGG16", update_target='both'):
+def main(model_folder, config_file, verbose, dataset='Cifar10', modelname="VGG16", update_target='both', model_weights=None, prefix=''):
     config_file = os.path.join(model_folder, config_file)
     train_kwargs = Config.from_json(os.path.join(parent(model_folder), 'train_config.json'))
     unlearn_kwargs = Config.from_json(config_file)
     poison_kwargs = Config.from_json(os.path.join(parent(model_folder), 'poison_config.json'))
-    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, dataset=dataset, modelname=modelname, update_target=update_target)
+    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, dataset=dataset, modelname=modelname, update_target=update_target, model_weights=model_weights, prefix=prefix)
 
 if __name__ == '__main__':
     args = get_parser().parse_args()
