@@ -62,12 +62,12 @@ def unlearn_update(z_x, z_y, z_y_delta, delta_idx, model, x_val, y_val, unlearn_
     z_y_delta = tf.constant(z_y_delta, dtype=tf.int32)
     with GradientLoggingContext('unlearn'):
         new_theta, diverged, duration_s = iter_approx_retraining(z_x, z_y_delta, model, x_val, y_val, delta_idx, verbose=verbose,
-                                                                 cm_dir=cm_dir, log_dir=log_dir,update_target=update_target, **unlearn_kwargs)
+                                                                 cm_dir=cm_dir, log_dir=log_dir, **unlearn_kwargs)
     return new_theta, diverged, LoggedGradientTape.logs['unlearn'], duration_s
 
 
 def iter_approx_retraining(z_x, z_y_delta, model, x_val, y_val, delta_idx, max_inner_steps=1,
-                           steps=1, verbose=False, cm_dir=None, log_dir=None, update_target='both', **unlearn_kwargs):
+                           steps=1, verbose=False, cm_dir=None, log_dir=None, **unlearn_kwargs):
     """Iterative approximate retraining.
 
     Args:
@@ -126,7 +126,7 @@ def iter_approx_retraining(z_x, z_y_delta, model, x_val, y_val, delta_idx, max_i
                     num_classes = y_val.shape[1]
                     z_y_pred = to_categorical(np.argmax(batch_pred(model, _z_x), axis=1), num_classes=num_classes)
                     new_theta, diverged = approx_retraining(model, _z_x, z_y_pred, _z_x_delta, _z_y_delta,
-                                                            hvp_x=z_x, hvp_y=z_y_delta, hvp_logger=hvp_logger,update_target=update_target,  **unlearn_kwargs)
+                                                            hvp_x=z_x, hvp_y=z_y_delta, hvp_logger=hvp_logger,  **unlearn_kwargs)
                     # don't update if the LiSSA algorithm diverged
                     if diverged:
                         break
