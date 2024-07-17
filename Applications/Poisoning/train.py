@@ -6,7 +6,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger
 from sklearn.metrics import classification_report
 
 from util import TrainingResult, measure_time
-from Applications.Poisoning.model import get_VGG_CIFAR10, get_VGG_CIFAR10, get_VGG16_SVHN, get_RESNET50_SVHN, get_RESNET50_CIFAR10, get_RESNET50_CIFAR100
+from Applications.Poisoning.model import get_VGG_CIFAR10, get_VGG16_CIFAR100, get_VGG16_SVHN, get_RESNET50_SVHN, get_RESNET50_CIFAR10, get_RESNET50_CIFAR100, get_VGG19_CIFAR10, get_VGG19_CIFAR100, get_VGG19_SVHN
 from Applications.Poisoning.configs.config import Config
 from Applications.Poisoning.dataset import Cifar10, SVHN, Cifar100
 
@@ -95,8 +95,13 @@ def main(model_folder, target_args='', model_filename=''):
         },
         'VGG16': {
             'Cifar10': lambda: get_VGG_CIFAR10(dense_units=train_kwargs['model_size']),
-            'Cifar100': lambda: get_VGG_CIFAR100(dense_units=train_kwargs['model_size']),
+            'Cifar100': lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size']),
             'SVHN': lambda: get_VGG16_SVHN(dense_units=train_kwargs['model_size'])
+        },
+         'VGG19': {
+            'Cifar10': lambda: get_VGG19_CIFAR10(dense_units=train_kwargs['model_size']),
+            'Cifar100': lambda: get_VGG19_CIFAR100(dense_units=train_kwargs['model_size']),
+            'SVHN': lambda: get_VGG19_SVHN(dense_units=train_kwargs['model_size'])
         }
     }
     data = dataset_loaders[dataset]()

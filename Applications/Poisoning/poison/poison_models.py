@@ -4,10 +4,9 @@ import argparse
 
 from Applications.Poisoning.configs.config import Config
 from Applications.Poisoning.train import train
-from Applications.Poisoning.model import get_VGG16_CIFAR10, get_VGG16_MNIST, get_VGG16_FASHION, get_VGG16_SVHN, get_VGG16_GTSRB, get_VGG16_CIFAR100, extractfeatures_VGG16, extractfeatures_RESNET50, classifier_VGG16, classifier_RESNET50 
-from Applications.Poisoning.model import get_RESNET50_CIFAR10, get_RESNET50_MNIST, get_RESNET50_FASHION, get_RESNET50_SVHN, get_RESNET50_GTSRB, get_RESNET50_CIFAR100
+from Applications.Poisoning.model import get_VGG_CIFAR10, get_VGG16_CIFAR100, get_VGG16_SVHN, get_RESNET50_SVHN, get_RESNET50_CIFAR10, get_RESNET50_CIFAR100, get_VGG19_CIFAR10, get_VGG19_CIFAR100, get_VGG19_SVHN
 from Applications.Poisoning.poison.injector import LabelflipInjector
-from Applications.Poisoning.dataset import Cifar10, Mnist, FashionMnist, SVHN, GTSRB, Cifar100
+from Applications.Poisoning.dataset import Cifar10, SVHN, Cifar100
 from Applications.Sharding.ensemble import train_models
 
 
@@ -18,120 +17,39 @@ def get_parser():
     return parser
 
 
-def train_poisoned(model_folder, poison_kwargs, train_kwargs, dataset='cifar10', modelname='VGG16', classes=10):
-    data = None
-    model_init = None
+def train_poisoned(model_folder, poison_kwargs, train_kwargs, target_args=''):
 
-    if dataset == 'Cifar100':
-        classes = 100
+    modelname, dataset, target = target_args.split('_', 2)
+
+    # Dictionaries for dataset loading and model initialization
+    dataset_loaders = {
+        'Cifar10': Cifar10.load,
+        'Cifar100': Cifar100.load,
+        'SVHN': SVHN.load
+    }
 
 
-    if dataset == 'Cifar10':
-        data = Cifar10.load()
-        if modelname == 'VGG16':
-            model_init = lambda: get_VGG16_CIFAR10(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3) )
-        elif modelname == 'RESNET50':
-            model_init = lambda: get_RESNET50_CIFAR10(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        elif modelname == 'extractfeatures_VGG16':
-            model_init = lambda: extractfeatures_VGG16(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32,32,3))
-        elif modelname == 'extractfeatures_RESNET50':
-            model_init = lambda: extractfeatures_RESNET50(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32 , 32, 3))
-        elif modelname == 'classifier_VGG16':
-            model_init = lambda: classifier_VGG16(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32,32,3))
-        elif modelname == 'classifier_RESNET50':
-            model_init = lambda: classifier_RESNET50(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32,32,3))
-        else:
-            raise ValueError(f"Unknown modelname: {modelname}")
-
-    elif dataset == 'Mnist':
-        data = Mnist.load()
-        if modelname == 'VGG16':
-            model_init = lambda: get_VGG16_MNIST(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
-            print(f"Classes: {classes}, Modelname: {modelname}")
-        elif modelname == 'RESNET50':
-            model_init = lambda: get_RESNET50_MNIST(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
-        elif modelname == 'extractfeatures_VGG16':
-            model_init = lambda: extractfeatures_VGG16(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
-        elif modelname == 'extractfeatures_RESNET50':
-            model_init = lambda: extractfeatures_RESNET50(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
-        elif modelname == 'classifier_VGG16':
-            model_init = lambda: classifier_VGG16(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
-        elif modelname == 'classifier_RESNET50':
-            model_init = lambda: classifier_RESNET50(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
-        else:
-            raise ValueError(f"Unknown modelname: {modelname}")
-        
-
-    elif dataset == 'FashionMnist':
-        data = FashionMnist.load()
-        if modelname == 'VGG16':
-            model_init = lambda: get_VGG16_FASHION(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        elif modelname == 'RESNET50':
-            model_init = lambda: get_RESNET50_FASHION(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        elif modelname == 'extractfeatures_VGG16':
-            model_init = lambda: extractfeatures_VGG16(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        elif modelname == 'extractfeatures_RESNET50':
-            model_init = lambda: extractfeatures_RESNET50(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        elif modelname == 'classifier_VGG16':
-            model_init = lambda: classifier_VGG16(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        elif modelname == 'classifier_RESNET50':
-            model_init = lambda: classifier_RESNET50(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        else:
-            raise ValueError(f"Unknown modelname: {modelname}")
-    elif dataset == 'SVHN':
-        data = SVHN.load()
-        if modelname == 'VGG16':
-            model_init = lambda: get_VGG16_SVHN(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        elif modelname == 'RESNET50':
-            model_init = lambda: get_RESNET50_SVHN(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        elif modelname == 'extractfeatures_VGG16':
-            model_init = lambda: extractfeatures_VGG16(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        elif modelname == 'extractfeatures_RESNET50':
-            model_init = lambda: extractfeatures_RESNET50(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        elif modelname == 'classifier_VGG16':
-            model_init = lambda: classifier_VGG16(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        elif modelname == 'classifier_RESNET50':
-            model_init = lambda: classifier_RESNET50(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        else:
-            raise ValueError(f"Unknown modelname: {modelname}")
-        
-    elif dataset == 'FashionMnist':
-        data = FashionMnist.load()
-        if modelname == 'VGG16':
-            model_init = lambda: get_VGG16_FASHION(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
-        elif modelname == 'RESNET50':
-            model_init = lambda: get_RESNET50_FASHION(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
-        elif modelname == 'extractfeatures_VGG16':
-            model_init = lambda: extractfeatures_VGG16(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
-        elif modelname == 'extractfeatures_RESNET50':
-            model_init = lambda: extractfeatures_RESNET50(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
-        elif modelname == 'classifier_VGG16':
-            model_init = lambda: classifier_VGG16(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
-        elif modelname == 'classifier_RESNET50':
-            model_init = lambda: classifier_RESNET50(num_classes=classes, dense_units=train_kwargs['model_size'], input_shape=(28, 28, 1))
-        else:
-            raise ValueError(f"Unknown modelname: {modelname}")
-        
-    elif dataset == 'Cifar100':
-        data = Cifar100.load()
-        if modelname == 'VGG16':
-            model_init = lambda: get_VGG16_CIFAR100(num_classes=100, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        elif modelname == 'RESNET50':
-            model_init = lambda: get_RESNET50_CIFAR100(num_classes=100, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        elif modelname == 'extractfeatures_VGG16':
-            model_init = lambda: extractfeatures_VGG16(num_classes=100, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        elif modelname == 'extractfeatures_RESNET50':
-            model_init = lambda: extractfeatures_RESNET50(num_classes=100, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        elif modelname == 'classifier_VGG16':
-            model_init = lambda: classifier_VGG16(num_classes=100, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        elif modelname == 'classifier_RESNET50':
-            model_init = lambda: classifier_RESNET50(num_classes=100, dense_units=train_kwargs['model_size'], input_shape=(32, 32, 3))
-        else:
-            raise ValueError(f"Unknown modelname: {modelname}")
-        
-    if data is None or model_init is None:
-        raise ValueError(f"Data or model initialization function not properly set for dataset: {dataset} and modelname: {modelname}")
-
+    model_initializers = {
+        'RESNET50': {
+            'Cifar10': lambda: get_RESNET50_CIFAR10(dense_units=train_kwargs['model_size']),
+            'Cifar100': lambda: get_RESNET50_CIFAR100(dense_units=train_kwargs['model_size']),
+            'SVHN': lambda: get_RESNET50_SVHN(dense_units=train_kwargs['model_size'])
+        },
+        'VGG16': {
+            'Cifar10': lambda: get_VGG_CIFAR10(dense_units=train_kwargs['model_size']),
+            'Cifar100': lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size']),
+            'SVHN': lambda: get_VGG16_SVHN(dense_units=train_kwargs['model_size'])
+        },
+         'VGG19': {
+            'Cifar10': lambda: get_VGG19_CIFAR10(dense_units=train_kwargs['model_size']),
+            'Cifar100': lambda: get_VGG19_CIFAR100(dense_units=train_kwargs['model_size']),
+            'SVHN': lambda: get_VGG19_SVHN(dense_units=train_kwargs['model_size'])
+        }
+    }
+    data = dataset_loaders[dataset]()
+    model_init = model_initializers[modelname][dataset]
+    
+    
     (x_train, y_train), _, _ = data
 
     # inject label flips
@@ -148,21 +66,24 @@ def train_poisoned(model_folder, poison_kwargs, train_kwargs, dataset='cifar10',
     injector.save(injector_path)
     data = ((x_train, y_train), data[1], data[2])
 
+    
+    
+    
     if 'sharding' in str(model_folder):
         n_shards = Config.from_json(os.path.join(model_folder, 'unlearn_config.json'))['n_shards']
-        train_models(model_init, model_folder, data, n_shards, model_filename=dataset+"_"+modelname+'_poisoned_model.hdf5', **train_kwargs)
+        train_models(model_init, model_folder, data, n_shards, model_filename='poisoned_model.hdf5', **train_kwargs)
     else:
-        train(dataset, modelname,model_init, model_folder, data, model_filename=dataset+"_"+modelname+'_poisoned_model.hdf5',  classes=classes, **train_kwargs)
+        train(model_init, model_folder, data, model_filename=dataset+"_"+modelname+'_poisoned_model.hdf5', target_args=target_args, **train_kwargs)
 
 
-def main(model_folder, config_file, dataset='cifar10', modelname='VGG16', classes=10):
+def main(model_folder, config_file, target_args=''):
     if 'sharding' in str(model_folder):
         poison_kwargs = Config.from_json(os.path.join(parent(model_folder), config_file))
         train_kwargs = Config.from_json(os.path.join(parent(model_folder), 'train_config.json'))
     else:
         poison_kwargs = Config.from_json(os.path.join(model_folder, config_file))
         train_kwargs = Config.from_json(os.path.join(model_folder, 'train_config.json'))
-    train_poisoned(model_folder, poison_kwargs, train_kwargs, dataset, modelname, classes=classes)
+    train_poisoned(model_folder, poison_kwargs, train_kwargs, target_args=target_args)
 
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@ import json
 import argparse
 
 from Applications.Poisoning.configs.config import Config
-from Applications.Poisoning.model import get_VGG_CIFAR10, get_VGG_CIFAR10, get_VGG16_SVHN, get_RESNET50_SVHN, get_RESNET50_CIFAR10, get_RESNET50_CIFAR100
+from Applications.Poisoning.model import get_VGG_CIFAR10, get_VGG16_CIFAR100, get_VGG16_SVHN, get_RESNET50_SVHN, get_RESNET50_CIFAR10, get_RESNET50_CIFAR100
 from Applications.Poisoning.poison.injector import LabelflipInjector
 from Applications.Poisoning.dataset import Cifar10, SVHN, Cifar100
 from Applications.Poisoning.unlearn.common import evaluate_unlearning
@@ -57,7 +57,7 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, ta
         }
     }
     data = dataset_loaders[dataset]()
-    
+    data_copy = dataset_loaders[dataset]()
     (x_train, y_train), _, _ = data
     y_train_orig = y_train.copy()
 
