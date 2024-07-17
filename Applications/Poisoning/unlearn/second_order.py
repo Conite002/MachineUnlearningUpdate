@@ -10,6 +10,18 @@ from Applications.Poisoning.dataset import Cifar10, SVHN, Cifar100
 from Applications.Poisoning.unlearn.common import evaluate_unlearning
 from util import UnlearningResult, reduce_dataset
 
+from sklearn.metrics import accuracy_score 
+import numpy as np
+
+def evaluate(model, data, weights_path):
+    (x_train, y_train), (x_test, y_test), (x_val, y_val) = data
+    model.load_weights(weights_path)
+    y_pred = model.predict(x=x_test)
+    y_pred = np.argmax(y_pred, axis=1)
+    y_true = np.argmax(y_test, axis=1)
+    acc = accuracy_score(y_true, y_pred)
+    return acc
+
 
 def get_parser():
     parser = argparse.ArgumentParser("second_order", description="Unlearn with second-order method.")
@@ -20,7 +32,7 @@ def get_parser():
     return parser
 
 
-def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, target_args='', reduction=1.0, verbose=False):
+def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, target_args='', reduction=1.0, verbose=False, modelweights=None):
 #     modeltype, dataset, target = target_args.split('_')
     modelname, dataset, target= target_args.split('_', 2)
     target, prefix, num_layers = target.split('-')
@@ -73,6 +85,12 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, ta
 #     poisoned_filename = 'poisoned_model.hdf5'
 #     repaired_filename = 'repaired_model.hdf5'
     poisoned_filename = f'{dataset}_{modelname}_poisoned_model.hdf5'
+    if modelweights is not None:
+        poisoned_filename = modelweights
+        acc = evaluate(model_init,data=data_copy, weights_path=poisoned_filename)
+        print(f"Accuracy init model :  {acc}")
+        
+        
     repaired_filename = f'{modelname}_{dataset}_{target}_{prefix}_repaired_model.hdf5'
     
     second_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig,
@@ -123,12 +141,12 @@ def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, 
     unlearning_result.save()
 
 
-def main(model_folder, config_file, verbose, target_args=''):
+def main(model_folder, config_file, verbose, target_args='', modelweights=None):
     config_file = os.path.join(model_folder, config_file)
     train_kwargs = Config.from_json(os.path.join(parent(model_folder), 'train_config.json'))
     unlearn_kwargs = Config.from_json(config_file)
     poison_kwargs = Config.from_json(os.path.join(parent(model_folder), 'poison_config.json'))
-    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, target_args=target_args)
+    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, target_args=target_args, modelweights=modelweights)
 
 
 if __name__ == '__main__':

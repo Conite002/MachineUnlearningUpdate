@@ -12,90 +12,55 @@ from keras.layers import Input, Dropout, Conv2D, LeakyReLU, MaxPool2D, MaxPoolin
 from keras.models import Model
 
 
-
 CIFAR_SHAPE = (32, 32, 3)
 
-def conv_block(input_tensor, filters, kernel_size, strides=(2, 2), use_bias=True, name=None):
-    x = layers.Conv2D(filters, kernel_size=kernel_size, strides=strides, padding='same', use_bias=use_bias, name=name + '_conv')(input_tensor)
-    x = layers.BatchNormalization(name=name + '_bn')(x)
-    x = layers.Activation('relu', name=name + '_relu')(x)
-    return x
 
-def identity_block(input_tensor, filters, kernel_size, name=None):
-    x = layers.Conv2D(filters, kernel_size=kernel_size, padding='same', use_bias=True, name=name + '_conv1')(input_tensor)
-    x = layers.BatchNormalization(name=name + '_bn1')(x)
-    x = layers.Activation('relu', name=name + '_relu1')(x)
+def get_VGG_CIFAR10(input_shape=CIFAR_SHAPE, weight_path=None, lr_init=0.001, dense_units=512, sgd=False):
+    n_filters = [128, 128, 128, 128, 128, 128]
+    conv_params = dict(activation='relu', kernel_size=3,
+                       kernel_initializer='he_uniform', padding='same')
 
-    x = layers.Conv2D(filters, kernel_size=kernel_size, padding='same', use_bias=True, name=name + '_conv2')(x)
-    x = layers.BatchNormalization(name=name + '_bn2')(x)
+    model = Sequential()
+    # VGG block 1
+    model.add(Conv2D(filters=n_filters[0], input_shape=input_shape, **conv_params))
+    model.add(BatchNormalization())
+    model.add(Conv2D(filters=n_filters[1], **conv_params))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.1))
+    # VGG block 2
+    model.add(Conv2D(filters=n_filters[2], **conv_params))
+    model.add(BatchNormalization())
+    model.add(Conv2D(filters=n_filters[3], **conv_params))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.1))
+    # VGG block 3
+    model.add(Conv2D(filters=n_filters[4], **conv_params))
+    model.add(BatchNormalization())
+    model.add(Conv2D(filters=n_filters[5], **conv_params))
+    model.add(BatchNormalization())
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.2))
 
-    x = layers.add([x, input_tensor], name=name + '_add')
-    x = layers.Activation('relu', name=name + '_relu2')(x)
-    return x
+    # dense and final layers
+    model.add(Flatten())
+    model.add(Dense(dense_units, activation='relu', kernel_initializer='he_uniform'))
+    model.add(BatchNormalization())
+    # model.add(Dropout(0.3))
+    model.add(Dense(units=10, activation='softmax'))
 
-def RESNET50Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=False, weight_path=None):
-    input_layer = layers.Input(shape=input_shape)
-    x = conv_block(input_layer, 64, 7, strides=(2, 2), use_bias=True, name='conv1')
-    x = layers.MaxPooling2D(3, strides=2, name='pool1')(x)
-
-    # Residual blocks
-    x = conv_block(x, 64, 3, strides=(1, 1), name='conv2_block1')
-    x = identity_block(x, 64, 3, name='conv2_block2')
-    x = identity_block(x, 64, 3, name='conv2_block3')
-
-    x = conv_block(x, 128, 3, name='conv3_block1')
-    x = identity_block(x, 128, 3, name='conv3_block2')
-    x = identity_block(x, 128, 3, name='conv3_block3')
-    x = identity_block(x, 128, 3, name='conv3_block4')
-
-    x = conv_block(x, 256, 3, name='conv4_block1')
-    x = identity_block(x, 256, 3, name='conv4_block2')
-    x = identity_block(x, 256, 3, name='conv4_block3')
-    x = identity_block(x, 256, 3, name='conv4_block4')
-    x = identity_block(x, 256, 3, name='conv4_block5')
-    x = identity_block(x, 256, 3, name='conv4_block6')
-
-    x = conv_block(x, 512, 3, name='conv5_block1')
-    x = identity_block(x, 512, 3, name='conv5_block2')
-    x = identity_block(x, 512, 3, name='conv5_block3')
-
-    # Fully Connected Layers
-    x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
-    x = layers.Dense(units=dense_units, activation='relu', name='fc1')(x)
-    x = layers.Dropout(0.5)(x)
-
-    output_layer = layers.Dense(units=num_classes, activation='softmax', name='predictions')(x)
-
-    model = Model(input_layer, output_layer)
-
+    # compile model, optionally load weights
     if sgd:
-        opt = SGD(learning_rate=lr_init, decay=1e-6, momentum=0.9, nesterov=True)
+        model.compile(optimizer=SGD(learning_rate=lr_init), loss=categorical_crossentropy, metrics='accuracy')
     else:
-        opt = Adam(learning_rate=lr_init)
-    
-    model.compile(optimizer=opt, loss=categorical_crossentropy, metrics=['accuracy'])
-    print(f"Loading weights from {weight_path}")
+        model.compile(optimizer=Adam(learning_rate=lr_init, amsgrad=True),
+                      loss=categorical_crossentropy, metrics='accuracy')
+    print(model.summary())
     if weight_path is not None:
         model.load_weights(weight_path)
     return model
 
-def get_RESNET50_CIFAR100(input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
-    return RESNET50Base(input_shape, num_classes, dense_units, lr_init, sgd)
-
-def get_RESNET50_CIFAR10(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    return RESNET50Base(input_shape, num_classes, dense_units, lr_init, sgd)
-
-def get_RESNET50_MNIST(input_shape=(28, 28, 1), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    return RESNET50Base(input_shape, num_classes, dense_units, lr_init, sgd)
-
-def get_RESNET50_FASHION(input_shape=(28, 28, 1), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    return RESNET50Base(input_shape, num_classes, dense_units, lr_init, sgd)
-
-def get_RESNET50_SVHN(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    return RESNET50Base(input_shape, num_classes, dense_units, lr_init, sgd)
-
-def get_RESNET50_GTSRB(input_shape=(32, 32, 3), num_classes=43, dense_units=512, lr_init=0.001, sgd=False):
-    return RESNET50Base(input_shape, num_classes, dense_units, lr_init, sgd)
 
 
 def VGG19Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=False, weight_path=None):
@@ -170,6 +135,16 @@ def VGG19Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=Fals
     # model.summary()
     return model
 
+def get_VGG19_CIFAR100( input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
+    return VGG19Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
+
+def get_VGG19_CIFAR10(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
+    return VGG19Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
+
+def get_VGG19_SVHN(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
+    return VGG19Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
+
+
 def VGG16Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=False, weight_path=None):
     n_filters = [128, 128, 128, 128, 128, 128]
     conv_params = dict(activation='relu', kernel_size=3,
@@ -216,88 +191,91 @@ def VGG16Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=Fals
         model.load_weights(weight_path)
     return model
 
-def get_VGG16_CIFAR100( input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
-    return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
-
-
-def get_VGG19_CIFAR100( input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
-    return VGG19Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
-
 
 
 def get_VGG16_CIFAR10(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
     return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
 
-def get_VGG19_CIFAR10(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    return VGG19Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
-
-
-def get_VGG16_MNIST(input_shape=(28, 28, 1), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    print("VGG16 MNIST model")
-    return VGG16Base((28, 28, 1), num_classes, dense_units, lr_init, sgd)
-
-def get_VGG16_FASHION(input_shape=(28, 28, 1), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    return VGG16Base((28, 28, 1), num_classes, dense_units, lr_init, sgd)
-
 def get_VGG16_SVHN(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
     return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
 
-
-def get_VGG19_SVHN(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    return VGG19Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
-
-def get_VGG16_GTSRB(input_shape=(32, 32, 3), num_classes=43, dense_units=512, lr_init=0.001, sgd=False):
+def get_VGG16_CIFAR100( input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
     return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
 
 
 
-
-def extractfeatures_VGG16(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
+CIFAR_SHAPE = (32, 32, 3)
 
 
-def classifier_VGG16(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    return VGG16Base((32, 32, 3), num_classes, dense_units, lr_init, sgd)
+def conv_block(input_tensor, filters, kernel_size, strides=(2, 2), use_bias=True, name=None):
+    x = layers.Conv2D(filters, kernel_size=kernel_size, strides=strides, padding='same', use_bias=use_bias, name=name + '_conv')(input_tensor)
+    x = layers.BatchNormalization(name=name + '_bn')(x)
+    x = layers.Activation('relu', name=name + '_relu')(x)
+    return x
 
+def identity_block(input_tensor, filters, kernel_size, name=None):
+    x = layers.Conv2D(filters, kernel_size=kernel_size, padding='same', use_bias=True, name=name + '_conv1')(input_tensor)
+    x = layers.BatchNormalization(name=name + '_bn1')(x)
+    x = layers.Activation('relu', name=name + '_relu1')(x)
 
-def extractfeatures_RESNET50(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    base_model = ResNet50(weights='imagenet', include_top=False)
+    x = layers.Conv2D(filters, kernel_size=kernel_size, padding='same', use_bias=True, name=name + '_conv2')(x)
+    x = layers.BatchNormalization(name=name + '_bn2')(x)
+
+    x = layers.add([x, input_tensor], name=name + '_add')
+    x = layers.Activation('relu', name=name + '_relu2')(x)
+    return x
+
+def RESNET50Base(input_shape, num_classes, dense_units=512, lr_init=0.001, sgd=False, weight_path=None):
+    input_layer = layers.Input(shape=input_shape)
+    x = conv_block(input_layer, 64, 7, strides=(2, 2), use_bias=True, name='conv1')
+    x = layers.MaxPooling2D(3, strides=2, name='pool1')(x)
+
+    # Residual blocks
+    x = conv_block(x, 64, 3, strides=(1, 1), name='conv2_block1')
+    x = identity_block(x, 64, 3, name='conv2_block2')
+    x = identity_block(x, 64, 3, name='conv2_block3')
+
+    x = conv_block(x, 128, 3, name='conv3_block1')
+    x = identity_block(x, 128, 3, name='conv3_block2')
+    x = identity_block(x, 128, 3, name='conv3_block3')
+    x = identity_block(x, 128, 3, name='conv3_block4')
+
+    x = conv_block(x, 256, 3, name='conv4_block1')
+    x = identity_block(x, 256, 3, name='conv4_block2')
+    x = identity_block(x, 256, 3, name='conv4_block3')
+    x = identity_block(x, 256, 3, name='conv4_block4')
+    x = identity_block(x, 256, 3, name='conv4_block5')
+    x = identity_block(x, 256, 3, name='conv4_block6')
+
+    x = conv_block(x, 512, 3, name='conv5_block1')
+    x = identity_block(x, 512, 3, name='conv5_block2')
+    x = identity_block(x, 512, 3, name='conv5_block3')
+
+    # Fully Connected Layers
+    x = layers.GlobalAveragePooling2D(name='avg_pool')(x)
+    x = layers.Dense(units=dense_units, activation='relu', name='fc1')(x)
+    x = layers.Dropout(0.5)(x)
+
+    output_layer = layers.Dense(units=num_classes, activation='softmax', name='predictions')(x)
+
+    model = Model(input_layer, output_layer)
+
+    if sgd:
+        opt = SGD(learning_rate=lr_init, decay=1e-6, momentum=0.9, nesterov=True)
+    else:
+        opt = Adam(learning_rate=lr_init)
     
-    for layer in base_model.layers:
-        layer.trainable = False
-    inputs = Input(shape=input_shape, name='image_input')
-    x = base_model(inputs)
-    x = GlobalAveragePooling2D()(x)
-    x = Dense(dense_units, activation='relu')(x)
-    x = Dropout(0.5)(x)
-    output = Dense(num_classes, activation='softmax')(x)
-    feature_extractor = Model(inputs=inputs, outputs=output)
-    feature_extractor.compile(optimizer='adam', loss=categorical_crossentropy, metrics=['accuracy'])
+    model.compile(optimizer=opt, loss=categorical_crossentropy, metrics=['accuracy'])
+    print(f"Loading weights from {weight_path}")
+    if weight_path is not None:
+        model.load_weights(weight_path)
+    return model
 
-    return feature_extractor
+def get_RESNET50_CIFAR100(input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
+    return RESNET50Base(input_shape, num_classes, dense_units, lr_init, sgd)
 
+def get_RESNET50_CIFAR10(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
+    return RESNET50Base(input_shape, num_classes, dense_units, lr_init, sgd)
 
-
-def classifier_VGG16_CIFAR100(input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
-    return classifier_VGG16(input_shape, num_classes, dense_units, lr_init, sgd)
-
-def classifier_RESNET50_CIFAR100(input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
-    return classifier_RESNET50(input_shape, num_classes, dense_units, lr_init, sgd)
-
-def extractfeatures_VGG16_CIFAR100(input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):
-    return extractfeatures_VGG16(input_shape, num_classes, dense_units, lr_init, sgd)
-
-def extractfeatures_RESNET50_CIFAR100(input_shape=(32, 32, 3), num_classes=100, dense_units=512, lr_init=0.001, sgd=False):   
-    return extractfeatures_RESNET50(input_shape, num_classes, dense_units, lr_init, sgd)
-
-def classifier_RESNET50(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
-    base_model = ResNet50(weights="imagenet", include_top=False)
-    inputs = Input(shape=input_shape, name='image_input')
-    x = base_model(inputs)
-    x = Flatten()(x)
-    x = Dense(4096, activation='relu')(x)
-    x = Dropout(0.5)(x)
-    outputs = Dense(num_classes, activation='softmax')(x)
-    model = Model(inputs, outputs)
-    model.compile(optimizer='adam', loss=categorical_crossentropy, metrics=['accuracy'])
-    return model    
+def get_RESNET50_SVHN(input_shape=(32, 32, 3), num_classes=10, dense_units=512, lr_init=0.001, sgd=False):
+    return RESNET50Base(input_shape, num_classes, dense_units, lr_init, sgd)

@@ -9,7 +9,6 @@ from sklearn.metrics import confusion_matrix
 
 from tensorflow.keras.backend import clear_session
 from tensorflow.keras.utils import to_categorical
-from sklearn.metrics import accuracy_score 
 
 from util import LoggedGradientTape, ModelTmpState, CSVLogger, measure_time, GradientLoggingContext
 from Applications.Poisoning.unlearn.core import approx_retraining
@@ -29,21 +28,16 @@ def evaluate_model_diff(model, new_model, x_valid, y_valid, diverged=False, verb
 
 
 def evaluate_unlearning(model_init, model_weights, data, delta_idx, y_train_orig, unlearn_kwargs, repaired_filepath=None,
-                        clean_acc=1.0, verbose=False, cm_dir=None, log_dir=None, update_target='both', model_weight=None):
-    clear_session()
-    (x_train, y_train), (x_test, y_test), (x_valid, y_valid) = data
-    model = model_init()
-    if model_weight is None:
-        model.load_weights(model_weights)
-    # print accuracy model
-    if model_weight is not None:
-        model.load_weights(model_weight)
-    print(f"Initial accuracy : {evaluate(model=model, data=data)}")
-    params = np.sum(np.product([xi for xi in x.shape]) for x in model.trainable_variables).item()
-    # model.load_weights(model_weights)
-    new_theta, diverged, logs, duration_s = unlearn_update(
-        x_train, y_train, y_train_orig, delta_idx, model, x_valid, y_valid, unlearn_kwargs, verbose=verbose, cm_dir=cm_dir, log_dir=log_dir, update_target=update_target)
+                        clean_acc=1.0, verbose=False, cm_dir=None, log_dir=None, target_args=''):
     
+    clear_session()
+    (x_train, y_train), _, (x_valid, y_valid) = data
+    model = model_init()
+    params = np.sum(np.product([xi for xi in x.shape]) for x in model.trainable_variables).item()
+    model.load_weights(model_weights)
+    new_theta, diverged, logs, duration_s = unlearn_update(
+        x_train, y_train, y_train_orig, delta_idx, model, x_valid, y_valid, unlearn_kwargs, target_args=target_args,  verbose=verbose, cm_dir=cm_dir, log_dir=log_dir)
+
     new_model = model_init()
     new_model.set_weights(new_theta)
     if repaired_filepath is not None:
@@ -55,19 +49,21 @@ def evaluate_unlearning(model_init, model_weights, data, delta_idx, y_train_orig
 
 
 def unlearn_update(z_x, z_y, z_y_delta, delta_idx, model, x_val, y_val, unlearn_kwargs,
-                   verbose=False, cm_dir=None, log_dir=None, update_target='both'):
+                   verbose=False, cm_dir=None, log_dir=None, target_args=''):
+    
+
     assert np.min(delta_idx) >= 0 and np.max(delta_idx) < z_x.shape[0]
 
     z_x = tf.constant(z_x, dtype=tf.float32)
     z_y_delta = tf.constant(z_y_delta, dtype=tf.int32)
     with GradientLoggingContext('unlearn'):
         new_theta, diverged, duration_s = iter_approx_retraining(z_x, z_y_delta, model, x_val, y_val, delta_idx, verbose=verbose,
-                                                                 cm_dir=cm_dir, log_dir=log_dir, **unlearn_kwargs)
+                                                                 cm_dir=cm_dir,target_args=target_args, log_dir=log_dir, **unlearn_kwargs)
     return new_theta, diverged, LoggedGradientTape.logs['unlearn'], duration_s
 
 
 def iter_approx_retraining(z_x, z_y_delta, model, x_val, y_val, delta_idx, max_inner_steps=1,
-                           steps=1, verbose=False, cm_dir=None, log_dir=None, **unlearn_kwargs):
+                           steps=1, verbose=False, cm_dir=None,target_args='', log_dir=None, **unlearn_kwargs):
     """Iterative approximate retraining.
 
     Args:
@@ -87,6 +83,12 @@ def iter_approx_retraining(z_x, z_y_delta, model, x_val, y_val, delta_idx, max_i
         bool: whether the LiSSA algorithm diverged
     """
 
+    
+    
+    modelname, dataset, targets= target_args.split('_', 2)
+    
+    target, prefix, num_layers = targets.split('-')
+    
     # take HVP batch size from kwargs
     hvp_batch_size = unlearn_kwargs.get('hvp_batch_size', 512)
 
@@ -123,10 +125,8 @@ def iter_approx_retraining(z_x, z_y_delta, model, x_val, y_val, delta_idx, max_i
                     hvp_logger.step = step
                     hvp_logger.inner_step = istep
                     # update model prediction after each model update
-                    num_classes = y_val.shape[1]
-                    z_y_pred = to_categorical(np.argmax(batch_pred(model, _z_x), axis=1), num_classes=num_classes)
-                    new_theta, diverged = approx_retraining(model, _z_x, z_y_pred, _z_x_delta, _z_y_delta,
-                                                            hvp_x=z_x, hvp_y=z_y_delta, hvp_logger=hvp_logger,  **unlearn_kwargs)
+                    z_y_pred = to_categorical(np.argmax(batch_pred(model, _z_x), axis=1), num_classes=10)
+                    new_theta, diverged = approx_retraining(model, _z_x, z_y_pred, _z_x_delta, _z_y_delta,target_args=targets  ,hvp_x=z_x, hvp_y=z_y_delta, hvp_logger=hvp_logger, **unlearn_kwargs)
                     # don't update if the LiSSA algorithm diverged
                     if diverged:
                         break
@@ -166,15 +166,6 @@ def iter_approx_retraining(z_x, z_y_delta, model, x_val, y_val, delta_idx, max_i
         duration_s = total_timer() - analysis_time
     return model_weights, diverged, duration_s
 
-def evaluate(model, data, weights_path=None):
-    (x_train, y_train), (x_test, y_test), (x_val, y_val) = data
-    if weights_path is not None:
-        model.load_weights(weights_path)
-    y_pred = model.predict(x=x_test)
-    y_pred = np.argmax(y_pred, axis=1)
-    y_true = np.argmax(y_test, axis=1)
-    acc = accuracy_score(y_true, y_pred)
-    return acc
 
 def get_delta_idx(model, x, y, batch_size):
     y_pred = np.argmax(batch_pred(model, x), axis=1)
