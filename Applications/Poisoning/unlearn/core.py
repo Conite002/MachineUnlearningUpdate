@@ -6,14 +6,14 @@ from util import LoggedGradientTape
 
 @tf.function
 def hvp(model, x, y, v, target_args):
-    target, num_layers = target_args.split('-')
+    target, prefix,  num_layers = target_args.split('-')
     num_layers = int(num_layers)
     
     """ Hessian vector product. """
     # 1st gradient of Loss w.r.t weights
     with LoggedGradientTape() as tape:
         # first gradient
-        grad_L = get_gradients(model, x, y, num_layers)
+        grad_L = get_gradients(model, x, y, target_args)
         assert len(v) == len(grad_L)
         # v^T * \nabla L
         v_dot_L = [tf.reduce_sum(v_i * grad_i) for v_i, grad_i in zip(v, grad_L)]
@@ -36,7 +36,7 @@ def hvp(model, x, y, v, target_args):
 
 def get_gradients(model, x_tensor, y_tensor, target_args, batch_size=2048):
     """ Calculate dL/dW (x, y) """
-    target, num_layers = target_args.split('-')
+    target, prefix,  num_layers = target_args.split('-')
     num_layers = int(num_layers)
 
     grads = []
@@ -124,13 +124,22 @@ def get_gradients_diff(model, x_tensor, y_tensor, x_delta_tensor, y_delta_tensor
 
 
 
-def get_inv_hvp_lissa(model, x, y, v, num_layers, hvp_batch_size, scale, damping, iterations=-1, verbose=False,
-                      repititions=1, early_stopping=True, patience=20, hvp_logger=None):
+def get_inv_hvp_lissa(model=None, x=None, y=None, v=None, target_args=None, hvp_batch_size=None, scale=None, damping=None, iterations=-1, verbose=False,
+                      repititions=1, early_stopping=True, patience=20, hvp_logger=None, tau=None):
     """
     Calculate H^-1*v using the iterative scheme proposed by Agarwal et al with batch updates.
     The scale and damping parameters have to be found by trial and error to achieve convergence.
     Rounds can be set to average the results over multiple runs to decrease variance and stabalize the results.
     """
+    
+    if hvp_batch_size is None:
+        hvp_batch_size = 1024
+    if scale is None:
+        scale = 2e5
+    if damping is None:
+        damping = 1e-4
+    
+    
     i = tf.constant(0)
     hvp_batch_size = int(hvp_batch_size)
     n_batches = 100 * np.ceil(x.shape[0] / hvp_batch_size) if iterations == -1 else iterations
@@ -144,10 +153,10 @@ def get_inv_hvp_lissa(model, x, y, v, num_layers, hvp_batch_size, scale, damping
         start, end = i_mod * hvp_batch_size, (i_mod+1) * hvp_batch_size
         if sp.issparse(x):
             batch_hvps = hvp(model, tf.gather(x, shuff_idx)[start:end].toarray(),
-                             tf.gather(y, shuff_idx)[start:end], u, num_layers)
+                             tf.gather(y, shuff_idx)[start:end], u, target_args)
         else:
             batch_hvps = hvp(model, tf.gather(x, shuff_idx)[start:end],
-                             tf.gather(y, shuff_idx)[start:end], u, num_layers)
+                             tf.gather(y, shuff_idx)[start:end], u, target_args)
         new_estimate = [a + (1-damping) * b - c/scale for (a, b, c) in zip(v, u, batch_hvps)]
         update_norm = np.sum(np.sum(np.abs(old - new)) for old, new in zip(u, new_estimate))
         if early_stopping and update_norm > update_min[0] and update_min[-1] >= patience:
@@ -230,7 +239,7 @@ def approx_retraining(model, z_x, z_y, z_x_delta, z_y_delta, order=2, hvp_x=None
             raise NotImplementedError('Conjugate Gradients is not implemented yet!')
         else:
             assert hvp_x is not None and hvp_y is not None
-            d_theta, diverged = get_inv_hvp_lissa(model, hvp_x, hvp_y, diff, num_layers, verbose=verbose,
+            d_theta, diverged = get_inv_hvp_lissa(model, hvp_x, hvp_y, diff, target_args, verbose=verbose,
                                                   hvp_logger=hvp_logger, **unlearn_kwargs)
 
     if order != 0:
