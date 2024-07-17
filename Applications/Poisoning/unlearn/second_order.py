@@ -4,7 +4,7 @@ import json
 import argparse
 
 from Applications.Poisoning.configs.config import Config
-from Applications.Poisoning.model import get_VGG_CIFAR10, get_VGG16_CIFAR100, get_VGG16_SVHN, get_RESNET50_SVHN, get_RESNET50_CIFAR10, get_RESNET50_CIFAR100
+from Applications.Poisoning.model import get_VGG_CIFAR10, get_VGG_CIFAR10, get_VGG16_SVHN, get_RESNET50_SVHN, get_RESNET50_CIFAR10, get_RESNET50_CIFAR100
 from Applications.Poisoning.poison.injector import LabelflipInjector
 from Applications.Poisoning.dataset import Cifar10, SVHN, Cifar100
 from Applications.Poisoning.unlearn.common import evaluate_unlearning
@@ -52,8 +52,13 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, ta
         },
         'VGG16': {
             'Cifar10': lambda: get_VGG_CIFAR10(dense_units=train_kwargs['model_size']),
-            'Cifar100': lambda: get_VGG_CIFAR100(dense_units=train_kwargs['model_size']),
+            'Cifar100': lambda: get_VGG16_CIFAR100(dense_units=train_kwargs['model_size']),
             'SVHN': lambda: get_VGG16_SVHN(dense_units=train_kwargs['model_size'])
+        },
+         'VGG19': {
+            'Cifar10': lambda: get_VGG19_CIFAR10(dense_units=train_kwargs['model_size']),
+            'Cifar100': lambda: get_VGG19_CIFAR100(dense_units=train_kwargs['model_size']),
+            'SVHN': lambda: get_VGG19_SVHN(dense_units=train_kwargs['model_size'])
         }
     }
     data = dataset_loaders[dataset]()
@@ -85,9 +90,9 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, ta
 #     poisoned_filename = 'poisoned_model.hdf5'
 #     repaired_filename = 'repaired_model.hdf5'
     poisoned_filename = f'{dataset}_{modelname}_poisoned_model.hdf5'
-    if modelweights is not None:
+    if modelweights:
         poisoned_filename = modelweights
-        acc = evaluate(model_init,data=data_copy, weights_path=poisoned_filename)
+        acc = evaluate(model_init(),data=data_copy, weights_path=poisoned_filename)
         print(f"Accuracy init model :  {acc}")
         
         

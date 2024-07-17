@@ -92,9 +92,9 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, ta
 #     poisoned_filename = 'poisoned_model.hdf5'
 #     repaired_filename = 'repaired_model.hdf5'
     poisoned_filename = f'{dataset}_{modelname}_poisoned_model.hdf5'
-    if modelweights is not None:
+    if modelweights:
         poisoned_filename = modelweights
-        acc = evaluate(model_init,data=data_copy, weights_path=poisoned_filename)
+        acc = evaluate(model_init(),data=data_copy, weights_path=poisoned_filename)
         print(f"Accuracy init model :  {acc}")
         
     repaired_filename = f'{modelname}_{dataset}_{target}_{prefix}_repaired_model.hdf5'
