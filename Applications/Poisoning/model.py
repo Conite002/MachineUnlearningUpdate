@@ -15,7 +15,6 @@ from keras.models import Model
 
 CIFAR_SHAPE = (32, 32, 3)
 
-
 def conv_block(input_tensor, filters, kernel_size, strides=(2, 2), use_bias=True, name=None):
     x = layers.Conv2D(filters, kernel_size=kernel_size, strides=strides, padding='same', use_bias=use_bias, name=name + '_conv')(input_tensor)
     x = layers.BatchNormalization(name=name + '_bn')(x)

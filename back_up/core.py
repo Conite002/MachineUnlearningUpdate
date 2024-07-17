@@ -5,10 +5,7 @@ import tensorflow as tf
 from util import LoggedGradientTape
 
 @tf.function
-def hvp(model, x, y, v, target_args):
-    target, num_layers = target_args.split('-')
-    num_layers = int(num_layers)
-    
+def hvp(model, x, y, v, num_layers):
     """ Hessian vector product. """
     # 1st gradient of Loss w.r.t weights
     with LoggedGradientTape() as tape:
@@ -16,113 +13,60 @@ def hvp(model, x, y, v, target_args):
         grad_L = get_gradients(model, x, y, num_layers)
         assert len(v) == len(grad_L)
         # v^T * \nabla L
-        v_dot_L = [tf.reduce_sum(v_i * grad_i) for v_i, grad_i in zip(v, grad_L)]
+        v_dot_L = [v_i * grad_i for v_i, grad_i in zip(v, grad_L)]
         # second gradient computation
-        if target == 'feature_extraction':
-            hvp = tape.gradient(v_dot_L, model.trainable_weights[:num_layers])
-        elif target == 'classifier':
-            hvp = tape.gradient(v_dot_L, model.trainable_weights[-num_layers:])
-        elif target == 'both':
-            hvp = tape.gradient(v_dot_L, model.trainable_weights[:])
-        else:
-            raise ValueError(f"Unknown target '{target}'. Should be one of 'feature_extraction', 'classifier', or 'both'.")
-    
+        hvp = tape.gradient(v_dot_L, model.trainable_weights[-num_layers:])
     # Convert IndexedSlices to Tensor if necessary
     for i in range(len(hvp)):
-        if isinstance(hvp[i], tf.IndexedSlices):
+        if type(hvp[i]) == tf.IndexedSlices:
             hvp[i] = tf.convert_to_tensor(hvp[i])
-    
     return hvp
 
-def get_gradients(model, x_tensor, y_tensor, target_args, batch_size=2048):
+def get_gradients(model, x_tensor, y_tensor, num_layers, batch_size=2048):
     """ Calculate dL/dW (x, y) """
-    target, num_layers = target_args.split('-')
-    num_layers = int(num_layers)
-
     grads = []
-    
     for start in range(0, x_tensor.shape[0], batch_size):
         with LoggedGradientTape() as tape:
-            if target == 'feature_extraction':
-                tape.watch(model.trainable_weights[:num_layers])
-            elif target == 'classifier':
-                tape.watch(model.trainable_weights[-num_layers:])
-            elif target == 'both':
-                tape.watch(model.trainable_weights[:])
-            else:
-                raise ValueError(f"Unknown target '{target}'. Should be one of 'feature_extraction', 'classifier', or 'both'.")
-
-            result = model(x_tensor[start:start + batch_size])
-            loss = model.loss(y_tensor[start:start + batch_size], result)
-            
-            if target == 'feature_extraction':
-                grads.append(tape.gradient(loss, model.trainable_weights[:num_layers]))
-            elif target == 'classifier':
-                grads.append(tape.gradient(loss, model.trainable_weights[-num_layers:]))
-            elif target == 'both':
-                grads.append(tape.gradient(loss, model.trainable_weights[:]))
-
+            tape.watch(model.trainable_weights[-num_layers:])
+            result = model(x_tensor[start:start+batch_size])
+            loss = model.loss(y_tensor[start:start+batch_size], result)
+            grads.append(tape.gradient(loss, model.trainable_weights[-num_layers:]))
     grads = list(zip(*grads))
     for i in range(len(grads)):
         grads[i] = tf.add_n(grads[i])
-    
     # Convert IndexedSlices to Tensor if necessary
     for i in range(len(grads)):
-        if isinstance(grads[i], tf.IndexedSlices):
+        if type(grads[i]) == tf.IndexedSlices:
             grads[i] = tf.convert_to_tensor(grads[i])
-    
     return grads
 
-
 @tf.function
-def get_gradients_diff(model, x_tensor, y_tensor, x_delta_tensor, y_delta_tensor, target_args, batch_size=1024):
+def get_gradients_diff(model, x_tensor, y_tensor, x_delta_tensor, y_delta_tensor, num_layers, batch_size=1024):
     """
     Compute d/dW [ Loss(x_delta, y_delta) - Loss(x,y) ]
     This saves one gradient call compared to calling `get_gradients` twice.
     """
-    target, prefix, num_layers = target_args.split('-')
-    
-    num_layers = int(num_layers)
-
     assert x_tensor.shape == x_delta_tensor.shape and y_tensor.shape == y_delta_tensor.shape
     grads = []
-    
+    num_layers = int(num_layers)
+    print(f" {num_layers} ")
     for start in range(0, x_tensor.shape[0], batch_size):
         with LoggedGradientTape() as tape:
-            if target == 'feature_extraction':
-                tape.watch(model.trainable_weights[:num_layers])
-            elif target == 'classifier':
-                tape.watch(model.trainable_weights[-num_layers:])
-            elif target == 'both':
-                tape.watch(model.trainable_weights[:])
-            else:
-                raise ValueError(f"Unknown target '{target}'. Should be one of 'feature_extraction', 'classifier', or 'both'.")
-
+            tape.watch(model.trainable_weights[-num_layers:])
             result_x = model(x_tensor[start:start + batch_size])
             result_x_delta = model(x_delta_tensor[start:start + batch_size])
             loss_x = model.loss(y_tensor[start:start + batch_size], result_x)
             loss_x_delta = model.loss(y_delta_tensor[start:start + batch_size], result_x_delta)
             diff = loss_x_delta - loss_x
-            
-            if target == 'feature_extraction':
-                grads.append(tape.gradient(diff, model.trainable_weights[:num_layers]))
-            elif target == 'classifier':
-                grads.append(tape.gradient(diff, model.trainable_weights[-num_layers:]))
-            elif target == 'both':
-                grads.append(tape.gradient(diff, model.trainable_weights[:]))
-
+            grads.append(tape.gradient(diff, model.trainable_weights[-num_layers:]))
     grads = list(zip(*grads))
     for i in range(len(grads)):
         grads[i] = tf.add_n(grads[i])
-    
     # Convert IndexedSlices to Tensor if necessary
     for i in range(len(grads)):
-        if isinstance(grads[i], tf.IndexedSlices):
+        if type(grads[i]) == tf.IndexedSlices:
             grads[i] = tf.convert_to_tensor(grads[i])
-    
     return grads
-
-
 
 def get_inv_hvp_lissa(model, x, y, v, num_layers, hvp_batch_size, scale, damping, iterations=-1, verbose=False,
                       repititions=1, early_stopping=True, patience=20, hvp_logger=None):
@@ -191,20 +135,14 @@ def get_inv_hvp_lissa(model, x, y, v, num_layers, hvp_batch_size, scale, damping
             for j in range(len(estimate)):
                 estimate[j] += res_upscaled[j] / repititions
     diverged = not all([tf.math.is_finite(tf.norm(e)) for e in estimate])
-    if diverged:
-        estimate = res[1]
-    tf.print(f"Convergence after {res[0]} iterations. Update norm {res[-1][0]}.")
     return estimate, diverged
 
-
 def approx_retraining(model, z_x, z_y, z_x_delta, z_y_delta, order=2, hvp_x=None, hvp_y=None, hvp_logger=None,
-                      conjugate_gradients=False, verbose=False, target_args='', **unlearn_kwargs):
+                      conjugate_gradients=False, verbose=False, num_layers=6, **unlearn_kwargs):
     """ Perform parameter update using influence functions. """
     
-    target, prefix, num_layers = target_args.split('-')
-    num_layers = int(num_layers)
-    
-    print(f'From core : target {target}, num_layers {num_layers}')
+    if num_layers == 'end': 
+        num_layers = len(model.trainable_weights)
     
     num_layers = int(num_layers)
     print(f'From core : num_layers {num_layers} ')
@@ -212,7 +150,7 @@ def approx_retraining(model, z_x, z_y, z_x_delta, z_y_delta, order=2, hvp_x=None
         tau = unlearn_kwargs.get('tau', 1)
 
         # First order update
-        diff = get_gradients_diff(model, z_x, z_y, z_x_delta, z_y_delta, target_args)
+        diff = get_gradients_diff(model, z_x, z_y, z_x_delta, z_y_delta, num_layers)
         d_theta = diff
         diverged = False
 
@@ -220,7 +158,7 @@ def approx_retraining(model, z_x, z_y, z_x_delta, z_y_delta, order=2, hvp_x=None
         tau = 1  # tau not used by second-order
 
         # Second order update
-        diff = get_gradients_diff(model, z_x, z_y, z_x_delta, z_y_delta, target_args)
+        diff = get_gradients_diff(model, z_x, z_y, z_x_delta, z_y_delta, num_layers)
 
         # Skip HVP if diff == 0
         if np.sum(np.sum(d) for d in diff) == 0:
@@ -234,29 +172,9 @@ def approx_retraining(model, z_x, z_y, z_x_delta, z_y_delta, order=2, hvp_x=None
                                                   hvp_logger=hvp_logger, **unlearn_kwargs)
 
     if order != 0:
-#         update_pos = len(model.trainable_weights) - len(d_theta)
-#         theta_approx = [w - tau * d_theta.pop(0) if i >= update_pos else w for i,
-#                         w in enumerate(model.trainable_weights)]
-#         theta_approx = [theta_approx.pop(0) if w.trainable else w for w in model.weights]
-#         theta_approx = [w.numpy() for w in theta_approx]
-        if target == 'feature_extraction':
-            update_pos = num_layers
-        elif target == 'classifier':
-            update_pos = len(model.trainable_weights) - num_layers
-        elif target == 'both':
-            update_pos = len(model.trainable_weights)
-        else:
-            raise ValueError(f"Unknown target '{target}'. Should be one of 'feature_extraction', 'classifier', or 'both'.")
-        
-        if target == 'feature_extraction':
-            theta_approx = [w - tau * d_theta.pop(0) for w in model.trainable_weights[:num_layers]]
-            theta_approx.extend(model.trainable_weights[num_layers:])
-        else:
-            theta_approx = [w - tau * d_theta.pop(0) if i >= update_pos else w for i,
-                            w in enumerate(model.trainable_weights)]
-        
+        update_pos = len(model.trainable_weights) - len(d_theta)
+        theta_approx = [w - tau * d_theta.pop(0) if i >= update_pos else w for i,
+                        w in enumerate(model.trainable_weights)]
         theta_approx = [theta_approx.pop(0) if w.trainable else w for w in model.weights]
         theta_approx = [w.numpy() for w in theta_approx]
-        
-        
     return theta_approx, diverged
