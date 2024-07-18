@@ -109,7 +109,7 @@ def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, 
     modelname, dataset, target= target_args.split('_', 2)
     target, prefix, num_layers = target.split('-')
     
-    name = f'{dataset}_{modelname}_{target}_{prefix}'
+    name = f'{modelname}_{target}_{prefix}'
     
     unlearning_result = UnlearningResult(model_folder, dataset, name)
     poisoned_weights = os.path.join(parent(model_folder), poisoned_filename)
