@@ -32,7 +32,7 @@ def get_parser():
     return parser
 
 
-def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, target_args='', reduction=1.0, verbose=False, modelweights=None):
+def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, target_args='', reduction=1.0, verbose=False, modelweights=None, train_results=None):
 #     modeltype, dataset, target = target_args.split('_')
     modelname, dataset, target= target_args.split('_', 2)
     target, prefix, num_layers = target.split('-')
@@ -99,11 +99,11 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, ta
     repaired_filename = f'{modelname}_{dataset}_{target}_{prefix}_repaired_model.hdf5'
     
     second_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig,
-                            injector.injected_idx, unlearn_kwargs=unlearn_kwargs, verbose=verbose, target_args=target_args)
+                            injector.injected_idx, unlearn_kwargs=unlearn_kwargs, verbose=verbose, target_args=target_args, train_results=train_results)
 
 
 def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, delta_idx,
-                            unlearn_kwargs, order=2, verbose=False, target_args=''):
+                            unlearn_kwargs, order=2, verbose=False, target_args='', train_results=None):
     
         
     modelname, dataset, target= target_args.split('_', 2)
@@ -121,10 +121,12 @@ def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, 
         return
     
     
-    train_results = f"{dataset}_{modelname}_train_results.json"
+#     train_results = f"{modelname}_{dataset}_train_results.json"
     # start unlearning hyperparameter search for the poisoned model
-    with open(model_folder.parents[2]/'clean'/train_results, 'r') as f:
-        clean_acc = json.load(f)['accuracy']
+    with open(model_folder.parents[2]/train_results, 'r') as f:
+        train_results_data = json.load(f)
+        clean_acc = train_results_data.get('accuracy', train_results_data.get('acc_after_fix'))
+    
     repaired_filepath = os.path.join(model_folder, repaired_filename)
     cm_dir = os.path.join(model_folder, 'cm')
     os.makedirs(cm_dir, exist_ok=True)
@@ -146,12 +148,12 @@ def second_order_unlearning(model_folder, poisoned_filename, repaired_filename, 
     unlearning_result.save()
 
 
-def main(model_folder, config_file, verbose, target_args='', modelweights=None):
+def main(model_folder, config_file, verbose, target_args='', modelweights=None, train_results=None):
     config_file = os.path.join(model_folder, config_file)
     train_kwargs = Config.from_json(os.path.join(parent(model_folder), 'train_config.json'))
     unlearn_kwargs = Config.from_json(config_file)
     poison_kwargs = Config.from_json(os.path.join(parent(model_folder), 'poison_config.json'))
-    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, target_args=target_args, modelweights=modelweights)
+    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, target_args=target_args, modelweights=modelweights, train_results=train_results)
 
 
 if __name__ == '__main__':

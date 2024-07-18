@@ -32,7 +32,7 @@ def get_parser():
     return parser
 
 
-def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, target_args='', reduction=1.0, verbose=False, modelweights=None):           
+def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, target_args='', reduction=1.0, verbose=False, modelweights=None, train_results=None):           
     modelname, dataset, target= target_args.split('_', 2)
     target, prefix, num_layers = target.split('-')
     
@@ -100,11 +100,11 @@ def run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, ta
     repaired_filename = f'{modelname}_{dataset}_{target}_{prefix}_repaired_model.hdf5'
     
     first_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data,
-                           y_train_orig, injector.injected_idx, unlearn_kwargs, verbose=verbose, target_args=target_args)
+                           y_train_orig, injector.injected_idx, unlearn_kwargs, verbose=verbose, target_args=target_args, train_results=train_results)
 
 
 def first_order_unlearning(model_folder, poisoned_filename, repaired_filename, model_init, data, y_train_orig, delta_idx,
-                            unlearn_kwargs, order=1, verbose=False, target_args=''):
+                            unlearn_kwargs, order=1, verbose=False, target_args='', train_results=None):
     
     modelname, dataset, target= target_args.split('_', 2)
     target, prefix, num_layers = target.split('-')
@@ -124,8 +124,8 @@ def first_order_unlearning(model_folder, poisoned_filename, repaired_filename, m
     
     
     # start unlearning hyperparameter search for the poisoned model
-    
-    train_results = f"{modelname}_{dataset}_{prefix}_train_results.json"
+#     train_results=None
+#     train_results = f"{modelname}_{dataset}_{prefix}_train_results.json"
     with open(model_folder.parents[2]/'clean'/train_results, 'r') as f:
         clean_acc = json.load(f)['accuracy']
     repaired_filepath = os.path.join(model_folder, repaired_filename)
@@ -133,7 +133,7 @@ def first_order_unlearning(model_folder, poisoned_filename, repaired_filename, m
     os.makedirs(cm_dir, exist_ok=True)
     unlearn_kwargs['order'] = order
     acc_before, acc_after, diverged, logs, unlearning_duration_s, params = evaluate_unlearning(model_init, poisoned_weights, data, delta_idx, y_train_orig, unlearn_kwargs, clean_acc=clean_acc,
-                                                                                       repaired_filepath=repaired_filepath, verbose=verbose, cm_dir=cm_dir, log_dir=log_dir, target_args=target_args)
+                                                                                       repaired_filepath=repaired_filepath, verbose=verbose, cm_dir=cm_dir, log_dir=log_dir, target_args=target_args, train_results=train_results)
     acc_perc_restored = (acc_after - acc_before) / (clean_acc - acc_before)
 
     unlearning_result.update({
@@ -149,12 +149,12 @@ def first_order_unlearning(model_folder, poisoned_filename, repaired_filename, m
     unlearning_result.save()
 
 
-def main(model_folder, config_file, verbose, target_args='', modelweights=None):
+def main(model_folder, config_file, verbose, target_args='', modelweights=None, train_results=None):
     config_file = os.path.join(model_folder, config_file)
     train_kwargs = Config.from_json(os.path.join(parent(model_folder), 'train_config.json'))
     unlearn_kwargs = Config.from_json(config_file)
     poison_kwargs = Config.from_json(os.path.join(parent(model_folder), 'poison_config.json'))
-    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, target_args=target_args, modelweights=modelweights)
+    run_experiment(model_folder, train_kwargs, poison_kwargs, unlearn_kwargs, verbose=verbose, target_args=target_args, modelweights=modelweights, train_results=train_results)
 
 
 if __name__ == '__main__':
