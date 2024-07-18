@@ -126,14 +126,16 @@ def first_order_unlearning(model_folder, poisoned_filename, repaired_filename, m
     # start unlearning hyperparameter search for the poisoned model
 #     train_results=None
 #     train_results = f"{modelname}_{dataset}_{prefix}_train_results.json"
-    with open(model_folder.parents[2]/'clean'/train_results, 'r') as f:
-        clean_acc = json.load(f)['accuracy']
+    with open(model_folder.parents[2]/train_results, 'r') as f:
+        train_results_data = json.load(f)
+        clean_acc = train_results_data.get('accuracy', train_results_data.get('acc_after_fix'))
+
     repaired_filepath = os.path.join(model_folder, repaired_filename)
     cm_dir = os.path.join(model_folder, 'cm')
     os.makedirs(cm_dir, exist_ok=True)
     unlearn_kwargs['order'] = order
     acc_before, acc_after, diverged, logs, unlearning_duration_s, params = evaluate_unlearning(model_init, poisoned_weights, data, delta_idx, y_train_orig, unlearn_kwargs, clean_acc=clean_acc,
-                                                                                       repaired_filepath=repaired_filepath, verbose=verbose, cm_dir=cm_dir, log_dir=log_dir, target_args=target_args, train_results=train_results)
+                                                                                       repaired_filepath=repaired_filepath, verbose=verbose, cm_dir=cm_dir, log_dir=log_dir, target_args=target_args)
     acc_perc_restored = (acc_after - acc_before) / (clean_acc - acc_before)
 
     unlearning_result.update({
